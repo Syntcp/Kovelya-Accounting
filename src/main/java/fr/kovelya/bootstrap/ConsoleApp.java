@@ -4,27 +4,28 @@ import fr.kovelya.application.AccountingService;
 import fr.kovelya.application.AccountingServiceImpl;
 import fr.kovelya.domain.model.Account;
 import fr.kovelya.domain.model.AccountType;
+import fr.kovelya.domain.model.AccountingPeriod;
 import fr.kovelya.domain.model.JournalTransaction;
 import fr.kovelya.domain.model.JournalType;
 import fr.kovelya.domain.model.Money;
 import fr.kovelya.infrastructure.persistence.memory.InMemoryAccountRepository;
+import fr.kovelya.infrastructure.persistence.memory.InMemoryAccountingPeriodRepository;
 import fr.kovelya.infrastructure.persistence.memory.InMemoryJournalTransactionRepository;
 import fr.kovelya.infrastructure.persistence.memory.InMemoryLedgerEntryRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Currency;
 
 public class ConsoleApp {
 
     public static void main(String[] args) {
-        InMemoryAccountRepository accountRepository = new InMemoryAccountRepository();
-        InMemoryLedgerEntryRepository ledgerEntryRepository = new InMemoryLedgerEntryRepository();
-        InMemoryJournalTransactionRepository transactionRepository = new InMemoryJournalTransactionRepository();
+        AccountingService accountingService = getAccountingService();
 
-        AccountingService accountingService = new AccountingServiceImpl(
-                accountRepository,
-                ledgerEntryRepository,
-                transactionRepository
+        AccountingPeriod fy2025 = accountingService.createPeriod(
+                "FY-2025",
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 12, 31)
         );
 
         Account cash = accountingService.openAccount("5300", "Cash", "EUR", AccountType.ASSET);
@@ -35,10 +36,16 @@ public class ConsoleApp {
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
-        System.out.println("Accounts:");
+        System.out.println("Accounts (global balance):");
         for (Account account : accountingService.listAccounts()) {
             Money balance = accountingService.getBalance(account.id());
             System.out.println(account.code() + " - " + account.name() + " - " + account.type() + " - balance: " + balance);
+        }
+
+        System.out.println("Accounts (balance in FY-2025):");
+        for (Account account : accountingService.listAccounts()) {
+            Money periodBalance = accountingService.getBalanceForPeriod(account.id(), fy2025);
+            System.out.println(account.code() + " - " + account.name() + " - " + account.type() + " - period balance: " + periodBalance);
         }
 
         System.out.println("Transactions:");
@@ -50,5 +57,20 @@ public class ConsoleApp {
                             + " - " + transaction.description()
             );
         }
+    }
+
+    private static AccountingService getAccountingService() {
+        InMemoryAccountRepository accountRepository = new InMemoryAccountRepository();
+        InMemoryLedgerEntryRepository ledgerEntryRepository = new InMemoryLedgerEntryRepository();
+        InMemoryJournalTransactionRepository transactionRepository = new InMemoryJournalTransactionRepository();
+        InMemoryAccountingPeriodRepository periodRepository = new InMemoryAccountingPeriodRepository();
+
+        AccountingService accountingService = new AccountingServiceImpl(
+                accountRepository,
+                ledgerEntryRepository,
+                transactionRepository,
+                periodRepository
+        );
+        return accountingService;
     }
 }

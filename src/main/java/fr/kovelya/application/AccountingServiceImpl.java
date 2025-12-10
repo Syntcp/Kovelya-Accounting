@@ -3,16 +3,20 @@ package fr.kovelya.application;
 import fr.kovelya.domain.model.Account;
 import fr.kovelya.domain.model.AccountId;
 import fr.kovelya.domain.model.AccountType;
+import fr.kovelya.domain.model.AccountingPeriod;
 import fr.kovelya.domain.model.JournalTransaction;
 import fr.kovelya.domain.model.JournalType;
 import fr.kovelya.domain.model.LedgerEntry;
 import fr.kovelya.domain.model.Money;
 import fr.kovelya.domain.repository.AccountRepository;
+import fr.kovelya.domain.repository.AccountingPeriodRepository;
 import fr.kovelya.domain.repository.JournalTransactionRepository;
 import fr.kovelya.domain.repository.LedgerEntryRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
@@ -22,11 +26,13 @@ public final class AccountingServiceImpl implements AccountingService {
     private final AccountRepository accountRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final JournalTransactionRepository journalTransactionRepository;
+    private final AccountingPeriodRepository accountingPeriodRepository;
 
-    public AccountingServiceImpl(AccountRepository accountRepository, LedgerEntryRepository ledgerEntryRepository, JournalTransactionRepository journalTransactionRepository) {
+    public AccountingServiceImpl(AccountRepository accountRepository, LedgerEntryRepository ledgerEntryRepository, JournalTransactionRepository journalTransactionRepository, AccountingPeriodRepository accountingPeriodRepository) {
         this.accountRepository = accountRepository;
         this.ledgerEntryRepository = ledgerEntryRepository;
         this.journalTransactionRepository = journalTransactionRepository;
+        this.accountingPeriodRepository = accountingPeriodRepository;
     }
 
     @Override
@@ -91,6 +97,23 @@ public final class AccountingServiceImpl implements AccountingService {
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
 
         List<LedgerEntry> entries = ledgerEntryRepository.findByAccount(accountId);
+        return getMoney(account, entries);
+    }
+
+    @Override
+    public Money getBalanceForPeriod(AccountId accountId, AccountingPeriod period) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        ZoneId zone = ZoneId.systemDefault();
+        Instant from = period.startDate().atStartOfDay(zone).toInstant();
+        Instant to = period.endDate().plusDays(1).atStartOfDay(zone).minusNanos(1).toInstant();
+
+        List<LedgerEntry> entries = ledgerEntryRepository.findByAccountAndPeriod(accountId, from, to);
+        return getMoney(account, entries);
+    }
+
+    private Money getMoney(Account account, List<LedgerEntry> entries) {
         Money balance = Money.zero(account.currency());
 
         for (LedgerEntry entry : entries) {
@@ -112,5 +135,16 @@ public final class AccountingServiceImpl implements AccountingService {
     @Override
     public List<JournalTransaction> listTransactions() {
         return journalTransactionRepository.findAll();
+    }
+
+    @Override
+    public AccountingPeriod createPeriod(String name, LocalDate startDate, LocalDate endDate) {
+        AccountingPeriod period = AccountingPeriod.open(name, startDate, endDate);
+        return accountingPeriodRepository.save(period);
+    }
+
+    @Override
+    public List<AccountingPeriod> listPeriods() {
+        return accountingPeriodRepository.findAll();
     }
 }
