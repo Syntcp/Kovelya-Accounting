@@ -2,6 +2,7 @@ package fr.kovelya.application;
 
 import fr.kovelya.domain.model.Account;
 import fr.kovelya.domain.model.AccountId;
+import fr.kovelya.domain.model.AccountType;
 import fr.kovelya.domain.model.LedgerEntry;
 import fr.kovelya.domain.model.Money;
 import fr.kovelya.domain.repository.AccountRepository;
@@ -23,15 +24,15 @@ public final class AccountingServiceImpl implements AccountingService {
     }
 
     @Override
-    public Account openAccount(String name, String currencyCode) {
+    public Account openAccount(String code, String name, String currencyCode, AccountType type) {
         Currency currency = Currency.getInstance(currencyCode);
-        Account account = Account.open(name, currency);
+        Account account = Account.open(code, name, type, currency);
         return accountRepository.save(account);
     }
 
     @Override
     public void transfer(AccountId from, AccountId to, Money amount, String description) {
-        if(amount.amount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (amount.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
 
@@ -40,11 +41,11 @@ public final class AccountingServiceImpl implements AccountingService {
         Account toAccount = accountRepository.findById(to)
                 .orElseThrow(() -> new IllegalArgumentException("Destination account not found"));
 
-        if(!fromAccount.currency().equals(toAccount.currency())) {
+        if (!fromAccount.currency().equals(toAccount.currency())) {
             throw new IllegalArgumentException("Currency mismatch between accounts");
         }
 
-        if(!fromAccount.currency().equals(amount.currency())) {
+        if (!fromAccount.currency().equals(amount.currency())) {
             throw new IllegalArgumentException("Currency mismatch between account and amount");
         }
 
