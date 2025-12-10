@@ -5,6 +5,7 @@ import fr.kovelya.application.AccountingServiceImpl;
 import fr.kovelya.domain.model.Account;
 import fr.kovelya.domain.model.AccountType;
 import fr.kovelya.domain.model.JournalTransaction;
+import fr.kovelya.domain.model.JournalType;
 import fr.kovelya.domain.model.Money;
 import fr.kovelya.infrastructure.persistence.memory.InMemoryAccountRepository;
 import fr.kovelya.infrastructure.persistence.memory.InMemoryJournalTransactionRepository;
@@ -30,7 +31,7 @@ public class ConsoleApp {
         Account bank = accountingService.openAccount("5121", "Bank", "EUR", AccountType.ASSET);
 
         Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
-        accountingService.transfer(cash.id(), bank.id(), amount, "Initial transfer");
+        accountingService.transfer(cash.id(), bank.id(), amount, JournalType.GENERAL, "Initial transfer");
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
@@ -42,7 +43,12 @@ public class ConsoleApp {
 
         System.out.println("Transactions:");
         for (JournalTransaction transaction : accountingService.listTransactions()) {
-            System.out.println(transaction.id().value() + " - " + transaction.reference() + " - " + transaction.description());
+            System.out.println(
+                    transaction.id().value()
+                            + " - " + transaction.journalType()
+                            + " - " + transaction.reference()
+                            + " - " + transaction.description()
+            );
         }
     }
 }

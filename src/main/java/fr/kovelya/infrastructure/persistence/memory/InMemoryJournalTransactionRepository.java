@@ -1,6 +1,7 @@
 package fr.kovelya.infrastructure.persistence.memory;
 
 import fr.kovelya.domain.model.JournalTransaction;
+import fr.kovelya.domain.model.JournalType;
 import fr.kovelya.domain.model.TransactionId;
 import fr.kovelya.domain.repository.JournalTransactionRepository;
 
@@ -41,6 +42,31 @@ public final class InMemoryJournalTransactionRepository implements JournalTransa
         for (JournalTransaction transaction : storage) {
             Instant ts = transaction.timestamp();
             if (!ts.isBefore(from) && !ts.isAfter(to)) {
+                result.add(transaction);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<JournalTransaction> findByJournal(JournalType journalType) {
+        List<JournalTransaction> result = new ArrayList<>();
+        for (JournalTransaction transaction : storage) {
+            if (transaction.journalType() == journalType) {
+                result.add(transaction);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<JournalTransaction> findByJournalAndPeriod(JournalType journalType, Instant from, Instant to) {
+        List<JournalTransaction> result = new ArrayList<>();
+        for (JournalTransaction transaction : storage) {
+            Instant ts = transaction.timestamp();
+            if (transaction.journalType() == journalType
+                    && !ts.isBefore(from)
+                    && !ts.isAfter(to)) {
                 result.add(transaction);
             }
         }

@@ -4,6 +4,7 @@ import fr.kovelya.domain.model.Account;
 import fr.kovelya.domain.model.AccountId;
 import fr.kovelya.domain.model.AccountType;
 import fr.kovelya.domain.model.JournalTransaction;
+import fr.kovelya.domain.model.JournalType;
 import fr.kovelya.domain.model.LedgerEntry;
 import fr.kovelya.domain.model.Money;
 import fr.kovelya.domain.repository.AccountRepository;
@@ -22,9 +23,7 @@ public final class AccountingServiceImpl implements AccountingService {
     private final LedgerEntryRepository ledgerEntryRepository;
     private final JournalTransactionRepository journalTransactionRepository;
 
-    public AccountingServiceImpl(AccountRepository accountRepository,
-                                 LedgerEntryRepository ledgerEntryRepository,
-                                 JournalTransactionRepository journalTransactionRepository) {
+    public AccountingServiceImpl(AccountRepository accountRepository, LedgerEntryRepository ledgerEntryRepository, JournalTransactionRepository journalTransactionRepository) {
         this.accountRepository = accountRepository;
         this.ledgerEntryRepository = ledgerEntryRepository;
         this.journalTransactionRepository = journalTransactionRepository;
@@ -38,7 +37,7 @@ public final class AccountingServiceImpl implements AccountingService {
     }
 
     @Override
-    public void transfer(AccountId from, AccountId to, Money amount, String description) {
+    public void transfer(AccountId from, AccountId to, Money amount, JournalType journalType, String description) {
         if (amount.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
@@ -82,7 +81,7 @@ public final class AccountingServiceImpl implements AccountingService {
         entries.add(credit);
 
         String reference = "TX-" + now.toEpochMilli();
-        JournalTransaction transaction = JournalTransaction.create(reference, description, now, entries);
+        JournalTransaction transaction = JournalTransaction.create(journalType, reference, description, now, entries);
         journalTransactionRepository.save(transaction);
     }
 

@@ -1,6 +1,7 @@
 package fr.kovelya.domain.repository;
 
 import fr.kovelya.domain.model.JournalTransaction;
+import fr.kovelya.domain.model.JournalType;
 import fr.kovelya.domain.model.TransactionId;
 
 import java.time.Instant;
@@ -16,4 +17,8 @@ public interface JournalTransactionRepository {
     List<JournalTransaction> findAll();
 
     List<JournalTransaction> findByPeriod(Instant from, Instant to);
+
+    List<JournalTransaction> findByJournal(JournalType journalType);
+
+    List<JournalTransaction> findByJournalAndPeriod(JournalType journalType, Instant from, Instant to);
 }
