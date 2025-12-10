@@ -3,13 +3,16 @@ package fr.kovelya.application;
 import fr.kovelya.domain.model.Account;
 import fr.kovelya.domain.model.AccountId;
 import fr.kovelya.domain.model.AccountType;
+import fr.kovelya.domain.model.JournalTransaction;
 import fr.kovelya.domain.model.LedgerEntry;
 import fr.kovelya.domain.model.Money;
 import fr.kovelya.domain.repository.AccountRepository;
+import fr.kovelya.domain.repository.JournalTransactionRepository;
 import fr.kovelya.domain.repository.LedgerEntryRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 
@@ -17,10 +20,14 @@ public final class AccountingServiceImpl implements AccountingService {
 
     private final AccountRepository accountRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final JournalTransactionRepository journalTransactionRepository;
 
-    public AccountingServiceImpl(AccountRepository accountRepository, LedgerEntryRepository ledgerEntryRepository) {
+    public AccountingServiceImpl(AccountRepository accountRepository,
+                                 LedgerEntryRepository ledgerEntryRepository,
+                                 JournalTransactionRepository journalTransactionRepository) {
         this.accountRepository = accountRepository;
         this.ledgerEntryRepository = ledgerEntryRepository;
+        this.journalTransactionRepository = journalTransactionRepository;
     }
 
     @Override
@@ -69,6 +76,14 @@ public final class AccountingServiceImpl implements AccountingService {
 
         ledgerEntryRepository.save(debit);
         ledgerEntryRepository.save(credit);
+
+        List<LedgerEntry> entries = new ArrayList<>();
+        entries.add(debit);
+        entries.add(credit);
+
+        String reference = "TX-" + now.toEpochMilli();
+        JournalTransaction transaction = JournalTransaction.create(reference, description, now, entries);
+        journalTransactionRepository.save(transaction);
     }
 
     @Override
@@ -93,5 +108,10 @@ public final class AccountingServiceImpl implements AccountingService {
     @Override
     public List<Account> listAccounts() {
         return accountRepository.findAll();
+    }
+
+    @Override
+    public List<JournalTransaction> listTransactions() {
+        return journalTransactionRepository.findAll();
     }
 }

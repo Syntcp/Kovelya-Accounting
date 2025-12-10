@@ -1,9 +1,6 @@
 package fr.kovelya.application;
 
-import fr.kovelya.domain.model.Account;
-import fr.kovelya.domain.model.AccountId;
-import fr.kovelya.domain.model.AccountType;
-import fr.kovelya.domain.model.Money;
+import fr.kovelya.domain.model.*;
 
 import java.util.List;
 
@@ -16,4 +13,6 @@ public interface AccountingService {
     Money getBalance(AccountId accountId);
 
     List<Account> listAccounts();
+
+    List<JournalTransaction> listTransactions();
 }
