@@ -1,4 +1,4 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.shared;
 
 import java.math.BigDecimal;
 import java.util.Currency;

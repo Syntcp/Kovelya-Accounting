@@ -1,7 +1,7 @@
 package fr.kovelya.infrastructure.persistence.memory;
 
-import fr.kovelya.domain.model.AccountId;
-import fr.kovelya.domain.model.LedgerEntry;
+import fr.kovelya.domain.account.AccountId;
+import fr.kovelya.domain.ledger.LedgerEntry;
 import fr.kovelya.domain.repository.LedgerEntryRepository;
 
 import java.time.Instant;

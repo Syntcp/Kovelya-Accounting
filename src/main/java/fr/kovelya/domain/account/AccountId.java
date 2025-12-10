@@ -1,22 +1,22 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.account;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public final class TransactionId {
+public final class AccountId {
 
     private final String value;
 
-    private TransactionId(String value) {
+    private AccountId(String value) {
         this.value = value;
     }
 
-    public static TransactionId newId() {
-        return new TransactionId(UUID.randomUUID().toString());
+    public static AccountId newId() {
+        return new AccountId(UUID.randomUUID().toString());
     }
 
-    public static TransactionId of(String value) {
-        return new TransactionId(value);
+    public static AccountId of(String value) {
+        return new AccountId(value);
     }
 
     public String value() {
@@ -26,7 +26,7 @@ public final class TransactionId {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof TransactionId that)) return false;
+        if (!(o instanceof AccountId that)) return false;
         return Objects.equals(value, that.value);
     }
 
@@ -39,4 +39,5 @@ public final class TransactionId {
     public String toString() {
         return value;
     }
+
 }

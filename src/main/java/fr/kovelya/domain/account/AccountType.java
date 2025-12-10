@@ -1,4 +1,4 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.account;
 
 public enum AccountType {
     ASSET,

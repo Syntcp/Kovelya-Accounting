@@ -1,4 +1,4 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.period;
 
 import java.time.LocalDate;
 import java.util.Objects;

@@ -1,4 +1,4 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.account;
 
 import java.util.Currency;
 import java.util.Objects;

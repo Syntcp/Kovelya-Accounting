@@ -1,8 +1,8 @@
 package fr.kovelya.domain.repository;
 
-import fr.kovelya.domain.model.JournalTransaction;
-import fr.kovelya.domain.model.JournalType;
-import fr.kovelya.domain.model.TransactionId;
+import fr.kovelya.domain.ledger.JournalTransaction;
+import fr.kovelya.domain.ledger.JournalType;
+import fr.kovelya.domain.ledger.TransactionId;
 
 import java.time.Instant;
 import java.util.List;

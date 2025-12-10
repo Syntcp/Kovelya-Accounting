@@ -1,4 +1,7 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.ledger;
+
+import fr.kovelya.domain.account.AccountId;
+import fr.kovelya.domain.shared.Money;
 
 import java.time.Instant;
 import java.util.Objects;

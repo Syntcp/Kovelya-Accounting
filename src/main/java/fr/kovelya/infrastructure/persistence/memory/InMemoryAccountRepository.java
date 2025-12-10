@@ -1,7 +1,7 @@
 package fr.kovelya.infrastructure.persistence.memory;
 
-import fr.kovelya.domain.model.Account;
-import fr.kovelya.domain.model.AccountId;
+import fr.kovelya.domain.account.Account;
+import fr.kovelya.domain.account.AccountId;
 import fr.kovelya.domain.repository.AccountRepository;
 
 import java.util.ArrayList;

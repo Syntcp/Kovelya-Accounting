@@ -1,8 +1,8 @@
 package fr.kovelya.infrastructure.persistence.memory;
 
-import fr.kovelya.domain.model.JournalTransaction;
-import fr.kovelya.domain.model.JournalType;
-import fr.kovelya.domain.model.TransactionId;
+import fr.kovelya.domain.ledger.JournalTransaction;
+import fr.kovelya.domain.ledger.JournalType;
+import fr.kovelya.domain.ledger.TransactionId;
 import fr.kovelya.domain.repository.JournalTransactionRepository;
 
 import java.time.Instant;

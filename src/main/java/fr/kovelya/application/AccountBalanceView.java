@@ -1,7 +1,7 @@
 package fr.kovelya.application;
 
-import fr.kovelya.domain.model.AccountType;
-import fr.kovelya.domain.model.Money;
+import fr.kovelya.domain.account.AccountType;
+import fr.kovelya.domain.shared.Money;
 
 public final class AccountBalanceView {
 

@@ -1,12 +1,12 @@
 package fr.kovelya.application;
 
-import fr.kovelya.domain.model.Account;
-import fr.kovelya.domain.model.AccountId;
-import fr.kovelya.domain.model.AccountType;
-import fr.kovelya.domain.model.AccountingPeriod;
-import fr.kovelya.domain.model.JournalTransaction;
-import fr.kovelya.domain.model.JournalType;
-import fr.kovelya.domain.model.Money;
+import fr.kovelya.domain.account.Account;
+import fr.kovelya.domain.account.AccountId;
+import fr.kovelya.domain.account.AccountType;
+import fr.kovelya.domain.period.AccountingPeriod;
+import fr.kovelya.domain.ledger.JournalTransaction;
+import fr.kovelya.domain.ledger.JournalType;
+import fr.kovelya.domain.shared.Money;
 
 import java.time.LocalDate;
 import java.util.List;

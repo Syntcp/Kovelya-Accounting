@@ -1,4 +1,4 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.ledger;
 
 public enum JournalType {
     GENERAL,

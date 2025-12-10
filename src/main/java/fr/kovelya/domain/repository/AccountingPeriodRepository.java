@@ -1,10 +1,9 @@
 package fr.kovelya.domain.repository;
 
-import fr.kovelya.domain.model.AccountingPeriod;
-import fr.kovelya.domain.model.AccountingPeriodId;
-import fr.kovelya.domain.model.PeriodStatus;
+import fr.kovelya.domain.period.AccountingPeriod;
+import fr.kovelya.domain.period.AccountingPeriodId;
+import fr.kovelya.domain.period.PeriodStatus;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

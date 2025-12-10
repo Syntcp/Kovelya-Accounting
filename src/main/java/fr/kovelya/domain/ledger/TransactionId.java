@@ -1,22 +1,22 @@
-package fr.kovelya.domain.model;
+package fr.kovelya.domain.ledger;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public final class AccountId {
+public final class TransactionId {
 
     private final String value;
 
-    private AccountId(String value) {
+    private TransactionId(String value) {
         this.value = value;
     }
 
-    public static AccountId newId() {
-        return new AccountId(UUID.randomUUID().toString());
+    public static TransactionId newId() {
+        return new TransactionId(UUID.randomUUID().toString());
     }
 
-    public static AccountId of(String value) {
-        return new AccountId(value);
+    public static TransactionId of(String value) {
+        return new TransactionId(value);
     }
 
     public String value() {
@@ -26,7 +26,7 @@ public final class AccountId {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof AccountId that)) return false;
+        if (!(o instanceof TransactionId that)) return false;
         return Objects.equals(value, that.value);
     }
 
@@ -39,5 +39,4 @@ public final class AccountId {
     public String toString() {
         return value;
     }
-
 }

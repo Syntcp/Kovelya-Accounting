@@ -1,8 +1,8 @@
 package fr.kovelya.infrastructure.persistence.memory;
 
-import fr.kovelya.domain.model.AccountingPeriod;
-import fr.kovelya.domain.model.AccountingPeriodId;
-import fr.kovelya.domain.model.PeriodStatus;
+import fr.kovelya.domain.period.AccountingPeriod;
+import fr.kovelya.domain.period.AccountingPeriodId;
+import fr.kovelya.domain.period.PeriodStatus;
 import fr.kovelya.domain.repository.AccountingPeriodRepository;
 
 import java.time.LocalDate;
