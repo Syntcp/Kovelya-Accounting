@@ -28,4 +28,6 @@ public interface AccountingService {
     AccountingPeriod createPeriod(String name, LocalDate startDate, LocalDate endDate);
 
     List<AccountingPeriod> listPeriods();
+
+    List<AccountBalanceView> getTrialBalance(AccountingPeriod period);
 }

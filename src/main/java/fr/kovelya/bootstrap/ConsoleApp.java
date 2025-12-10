@@ -1,5 +1,6 @@
 package fr.kovelya.bootstrap;
 
+import fr.kovelya.application.AccountBalanceView;
 import fr.kovelya.application.AccountingService;
 import fr.kovelya.application.AccountingServiceImpl;
 import fr.kovelya.domain.model.Account;
@@ -20,7 +21,17 @@ import java.util.Currency;
 public class ConsoleApp {
 
     public static void main(String[] args) {
-        AccountingService accountingService = getAccountingService();
+        InMemoryAccountRepository accountRepository = new InMemoryAccountRepository();
+        InMemoryLedgerEntryRepository ledgerEntryRepository = new InMemoryLedgerEntryRepository();
+        InMemoryJournalTransactionRepository transactionRepository = new InMemoryJournalTransactionRepository();
+        InMemoryAccountingPeriodRepository periodRepository = new InMemoryAccountingPeriodRepository();
+
+        AccountingService accountingService = new AccountingServiceImpl(
+                accountRepository,
+                ledgerEntryRepository,
+                transactionRepository,
+                periodRepository
+        );
 
         AccountingPeriod fy2025 = accountingService.createPeriod(
                 "FY-2025",
@@ -57,20 +68,15 @@ public class ConsoleApp {
                             + " - " + transaction.description()
             );
         }
-    }
 
-    private static AccountingService getAccountingService() {
-        InMemoryAccountRepository accountRepository = new InMemoryAccountRepository();
-        InMemoryLedgerEntryRepository ledgerEntryRepository = new InMemoryLedgerEntryRepository();
-        InMemoryJournalTransactionRepository transactionRepository = new InMemoryJournalTransactionRepository();
-        InMemoryAccountingPeriodRepository periodRepository = new InMemoryAccountingPeriodRepository();
-
-        AccountingService accountingService = new AccountingServiceImpl(
-                accountRepository,
-                ledgerEntryRepository,
-                transactionRepository,
-                periodRepository
-        );
-        return accountingService;
+        System.out.println("Trial balance for " + fy2025.name() + ":");
+        for (AccountBalanceView line : accountingService.getTrialBalance(fy2025)) {
+            System.out.println(
+                    line.accountCode()
+                            + " - " + line.accountName()
+                            + " - " + line.accountType()
+                            + " - balance: " + line.balance()
+            );
+        }
     }
 }

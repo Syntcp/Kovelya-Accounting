@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Currency;
+import java.util.Comparator;
 import java.util.List;
 
 public final class AccountingServiceImpl implements AccountingService {
@@ -97,7 +98,17 @@ public final class AccountingServiceImpl implements AccountingService {
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
 
         List<LedgerEntry> entries = ledgerEntryRepository.findByAccount(accountId);
-        return getMoney(account, entries);
+        Money balance = Money.zero(account.currency());
+
+        for (LedgerEntry entry : entries) {
+            if (entry.direction() == LedgerEntry.Direction.DEBIT) {
+                balance = balance.subtract(entry.amount());
+            } else {
+                balance = balance.add(entry.amount());
+            }
+        }
+
+        return balance;
     }
 
     @Override
@@ -110,10 +121,6 @@ public final class AccountingServiceImpl implements AccountingService {
         Instant to = period.endDate().plusDays(1).atStartOfDay(zone).minusNanos(1).toInstant();
 
         List<LedgerEntry> entries = ledgerEntryRepository.findByAccountAndPeriod(accountId, from, to);
-        return getMoney(account, entries);
-    }
-
-    private Money getMoney(Account account, List<LedgerEntry> entries) {
         Money balance = Money.zero(account.currency());
 
         for (LedgerEntry entry : entries) {
@@ -146,5 +153,23 @@ public final class AccountingServiceImpl implements AccountingService {
     @Override
     public List<AccountingPeriod> listPeriods() {
         return accountingPeriodRepository.findAll();
+    }
+
+    @Override
+    public List<AccountBalanceView> getTrialBalance(AccountingPeriod period) {
+        List<AccountBalanceView> result = new ArrayList<>();
+
+        for (Account account : accountRepository.findAll()) {
+            var balance = getBalanceForPeriod(account.id(), period);
+            result.add(new AccountBalanceView(
+                    account.code(),
+                    account.name(),
+                    account.type(),
+                    balance
+            ));
+        }
+
+        result.sort(Comparator.comparing(AccountBalanceView::accountCode));
+        return result;
     }
 }
