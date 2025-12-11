@@ -59,6 +59,11 @@ public class ConsoleApp {
                 "4110"
         );
 
+        ReceivablesAgingService receivablesAgingService = new ReceivablesAgingServiceImpl(
+                customerRepository,
+                salesInvoiceRepository
+        );
+
         AccountingPeriod fy2025 = accountingService.createPeriod(
                 "FY-2025",
                 LocalDate.of(2025, 1, 1),
@@ -76,18 +81,27 @@ public class ConsoleApp {
 
         Customer customer = invoicingService.createCustomer("CUST-001", "Acme Corp");
 
-        SalesInvoice invoice = invoicingService.createDraftInvoice(
+        SalesInvoice invoice1 = invoicingService.createDraftInvoice(
                 "INV-2025-0001",
                 customer.id(),
                 LocalDate.of(2025, 1, 15),
                 LocalDate.of(2025, 2, 15),
                 new InvoiceLineRequest("Website development", new BigDecimal("1500.00"), TaxCategory.STANDARD),
-                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"), TaxCategory.STANDARD),
-                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"), TaxCategory.EXEMPT)
+                new InvoiceLineRequest("Maintenance plan", new BigDecimal("400.00"), TaxCategory.EXEMPT)
         );
 
-        invoicePostingService.postInvoice(invoice.id());
-        invoicePaymentService.recordPayment(invoice.id(), "5121");
+        invoicePostingService.postInvoice(invoice1.id());
+        invoicePaymentService.recordPayment(invoice1.id(), "5121");
+
+        SalesInvoice invoice2 = invoicingService.createDraftInvoice(
+                "INV-2025-0002",
+                customer.id(),
+                LocalDate.of(2025, 2, 20),
+                LocalDate.of(2025, 3, 5),
+                new InvoiceLineRequest("SEO consulting", new BigDecimal("800.00"), TaxCategory.STANDARD)
+        );
+
+        invoicePostingService.postInvoice(invoice2.id());
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
@@ -130,6 +144,21 @@ public class ConsoleApp {
         System.out.println("Sales invoices:");
         for (SalesInvoice inv : invoicingService.listInvoices()) {
             System.out.println(inv.number() + " - " + inv.status() + " - total: " + inv.total());
+        }
+
+        LocalDate asOfDate = LocalDate.of(2025, 3, 15);
+        System.out.println("Receivables aging as of " + asOfDate + ":");
+        for (CustomerReceivableAgingView view : receivablesAgingService.getCustomerAging(asOfDate)) {
+            System.out.println(
+                    view.customer().code()
+                            + " - " + view.customer().name()
+                            + " | not due: " + view.notDue()
+                            + " | 0-30: " + view.due0_30()
+                            + " | 31-60: " + view.due31_60()
+                            + " | 61-90: " + view.due61_90()
+                            + " | 90+: " + view.due90Plus()
+                            + " | total: " + view.total()
+            );
         }
     }
 }
