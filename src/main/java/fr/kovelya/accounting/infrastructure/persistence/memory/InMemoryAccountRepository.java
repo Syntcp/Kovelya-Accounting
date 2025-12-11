@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.memory;
+package fr.kovelya.accounting.infrastructure.persistence.memory;
 
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountId;
@@ -27,5 +27,15 @@ public final class InMemoryAccountRepository implements AccountRepository {
     @Override
     public List<Account> findAll() {
         return new ArrayList<>(storage.values());
+    }
+
+    @Override
+    public Optional<Account> findByCode(String code) {
+        for (Account account : storage.values()) {
+            if (account.code().equals(code)) {
+                return Optional.of(account);
+            }
+        }
+        return Optional.empty();
     }
 }

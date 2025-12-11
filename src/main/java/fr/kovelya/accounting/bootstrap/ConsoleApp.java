@@ -5,11 +5,11 @@ import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountType;
 import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;
-import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
+import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.shared.Money;
-import fr.kovelya.accounting.memory.*;
+import fr.kovelya.accounting.infrastructure.persistence.memory.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,9 +22,15 @@ public class ConsoleApp {
         InMemoryLedgerEntryRepository ledgerEntryRepository = new InMemoryLedgerEntryRepository();
         InMemoryJournalTransactionRepository transactionRepository = new InMemoryJournalTransactionRepository();
         InMemoryAccountingPeriodRepository periodRepository = new InMemoryAccountingPeriodRepository();
-
         InMemoryCustomerRepository customerRepository = new InMemoryCustomerRepository();
         InMemorySalesInvoiceRepository salesInvoiceRepository = new InMemorySalesInvoiceRepository();
+
+        AccountingService accountingService = new AccountingServiceImpl(
+                accountRepository,
+                ledgerEntryRepository,
+                transactionRepository,
+                periodRepository
+        );
 
         InvoicingService invoicingService = new InvoicingServiceImpl(
                 customerRepository,
@@ -32,12 +38,12 @@ public class ConsoleApp {
                 Currency.getInstance("EUR")
         );
 
-
-        AccountingService accountingService = new AccountingServiceImpl(
+        InvoicePostingService invoicePostingService = new InvoicePostingServiceImpl(
+                salesInvoiceRepository,
                 accountRepository,
-                ledgerEntryRepository,
-                transactionRepository,
-                periodRepository
+                accountingService,
+                "4110",
+                "7060"
         );
 
         AccountingPeriod fy2025 = accountingService.createPeriod(
@@ -48,9 +54,24 @@ public class ConsoleApp {
 
         Account cash = accountingService.openAccount("5300", "Cash", "EUR", AccountType.ASSET);
         Account bank = accountingService.openAccount("5121", "Bank", "EUR", AccountType.ASSET);
+        Account receivable = accountingService.openAccount("4110", "Accounts Receivable", "EUR", AccountType.ASSET);
+        Account revenue = accountingService.openAccount("7060", "Sales Revenue", "EUR", AccountType.INCOME);
 
         Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
         accountingService.transfer(cash.id(), bank.id(), amount, JournalType.GENERAL, "Initial transfer");
+
+        Customer customer = invoicingService.createCustomer("CUST-001", "Acme Corp");
+
+        SalesInvoice invoice = invoicingService.createDraftInvoice(
+                "INV-2025-0001",
+                customer.id(),
+                LocalDate.of(2025, 1, 15),
+                LocalDate.of(2025, 2, 15),
+                new InvoiceLineRequest("Website development", new BigDecimal("1500.00")),
+                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"))
+        );
+
+        invoicePostingService.postInvoice(invoice.id());
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
@@ -86,17 +107,6 @@ public class ConsoleApp {
             );
         }
 
-        Customer customer = invoicingService.createCustomer("CUST-001", "Acme Corp");
-
-        SalesInvoice invoice = invoicingService.createDraftInvoice(
-                "INV-2025-0001",
-                customer.id(),
-                LocalDate.of(2025, 1, 15),
-                LocalDate.of(2025, 2, 15),
-                new InvoiceLineRequest("Website development", new BigDecimal("1500.00")),
-                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"))
-        );
-
         System.out.println("Customers:");
         for (Customer c : invoicingService.listCustomers()) {
             System.out.println(c.code() + " - " + c.name());
@@ -106,6 +116,5 @@ public class ConsoleApp {
         for (SalesInvoice inv : invoicingService.listInvoices()) {
             System.out.println(inv.number() + " - " + inv.status() + " - total: " + inv.total());
         }
-
     }
 }

@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.memory;
+package fr.kovelya.accounting.infrastructure.persistence.memory;
 
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;

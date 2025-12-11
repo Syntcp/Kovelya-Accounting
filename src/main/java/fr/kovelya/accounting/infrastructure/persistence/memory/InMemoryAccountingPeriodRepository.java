@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.memory;
+package fr.kovelya.accounting.infrastructure.persistence.memory;
 
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.period.AccountingPeriodId;

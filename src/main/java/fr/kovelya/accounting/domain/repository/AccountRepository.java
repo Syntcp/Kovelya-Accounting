@@ -12,5 +12,7 @@ public interface AccountRepository {
 
     Optional<Account> findById(AccountId id);
 
+    Optional<Account> findByCode(String code);
+
     List<Account> findAll();
 }

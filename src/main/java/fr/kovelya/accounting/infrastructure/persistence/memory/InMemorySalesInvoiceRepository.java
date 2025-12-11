@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.memory;
+package fr.kovelya.accounting.infrastructure.persistence.memory;
 
 import fr.kovelya.accounting.domain.customer.CustomerId;
 import fr.kovelya.accounting.domain.invoice.InvoiceStatus;
@@ -17,6 +17,12 @@ public final class InMemorySalesInvoiceRepository implements SalesInvoiceReposit
 
     @Override
     public SalesInvoice save(SalesInvoice invoice) {
+        for (int i = 0; i < storage.size(); i++) {
+            if(storage.get(i).id().equals(invoice.id())) {
+                storage.set(i, invoice);
+                return invoice;
+            }
+        }
         storage.add(invoice);
         return invoice;
     }
