@@ -124,7 +124,15 @@ public class ConsoleApp {
         Account vatDeductible = accountingService.openAccount("4456", "VAT Deductible", "EUR", AccountType.ASSET);
 
         Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
-        accountingService.transfer(bank.id(), cash.id(), amount, JournalType.GENERAL, "Initial transfer");
+        accountingService.postTransfer(
+                bank.id(),
+                cash.id(),
+                amount,
+                JournalType.GENERAL,
+                "Initial transfer",
+                LocalDate.of(2025, 1, 1)
+        );
+
 
         Customer customer = invoicingService.createCustomer("CUST-001", "Acme Corp");
 
@@ -138,7 +146,12 @@ public class ConsoleApp {
         );
 
         invoicePostingService.postInvoice(invoice1.id());
-        invoicePaymentService.recordPayment(invoice1.id(), "5121");
+        invoicePaymentService.recordPayment(
+                invoice1.id(),
+                "5121",
+                LocalDate.of(2025, 2, 20)
+        );
+
 
         SalesInvoice invoice2 = invoicingService.createDraftInvoice(
                 "INV-2025-0002",
@@ -161,7 +174,12 @@ public class ConsoleApp {
         );
 
         purchaseInvoicePostingService.postPurchaseInvoice(purchaseInvoice.id());
-        purchaseInvoicePaymentService.recordPayment(purchaseInvoice.id(), "5121");
+        purchaseInvoicePaymentService.recordPayment(
+                purchaseInvoice.id(),
+                "5121",
+                LocalDate.of(2025, 3, 5)
+        );
+
 
         System.out.println("Kovelya Extreme Accounting is alive");
 

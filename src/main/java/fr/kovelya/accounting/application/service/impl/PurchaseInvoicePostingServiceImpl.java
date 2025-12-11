@@ -100,6 +100,7 @@ public final class PurchaseInvoicePostingServiceImpl implements PurchaseInvoiceP
         accountingService.postJournalTransaction(
                 JournalType.PURCHASES,
                 "Purchase invoice " + toPost.number(),
+                toPost.issueDate(),
                 debitExpense,
                 debitVat,
                 creditPayable

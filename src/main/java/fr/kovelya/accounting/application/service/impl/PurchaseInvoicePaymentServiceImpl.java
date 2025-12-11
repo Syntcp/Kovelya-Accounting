@@ -11,6 +11,8 @@ import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceStatus;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
 import fr.kovelya.accounting.domain.repository.PurchaseInvoiceRepository;
 
+import java.time.LocalDate;
+
 public final class PurchaseInvoicePaymentServiceImpl implements PurchaseInvoicePaymentService {
 
     private final PurchaseInvoiceRepository purchaseInvoiceRepository;
@@ -26,7 +28,7 @@ public final class PurchaseInvoicePaymentServiceImpl implements PurchaseInvoiceP
     }
 
     @Override
-    public void recordPayment(PurchaseInvoiceId invoiceId, String bankAccountCode) {
+    public void recordPayment(PurchaseInvoiceId invoiceId, String bankAccountCode, LocalDate paymentDate) {
         PurchaseInvoice invoice = purchaseInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("Purchase invoice not found"));
 
@@ -44,15 +46,17 @@ public final class PurchaseInvoicePaymentServiceImpl implements PurchaseInvoiceP
         Account bank = accountRepository.findByCode(bankAccountCode)
                 .orElseThrow(() -> new IllegalStateException("Bank account not found: " + bankAccountCode));
 
-        accountingService.transfer(
+        accountingService.postTransfer(
                 payable.id(),
                 bank.id(),
                 invoice.total(),
                 JournalType.BANK,
-                "Payment of purchase invoice " + invoice.number()
+                "Payment of purchase invoice " + invoice.number(),
+                paymentDate
         );
 
         PurchaseInvoice paid = invoice.markPaid();
         purchaseInvoiceRepository.save(paid);
     }
+
 }

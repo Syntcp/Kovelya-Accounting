@@ -10,6 +10,8 @@ import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
 import fr.kovelya.accounting.domain.repository.SalesInvoiceRepository;
 
+import java.time.LocalDate;
+
 public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
 
     private final SalesInvoiceRepository salesInvoiceRepository;
@@ -25,7 +27,7 @@ public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
     }
 
     @Override
-    public void recordPayment(SalesInvoiceId invoiceId, String bankAccountCode) {
+    public void recordPayment(SalesInvoiceId invoiceId, String bankAccountCode, LocalDate paymentDate) {
         SalesInvoice invoice = salesInvoiceRepository.findById((invoiceId))
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
 
@@ -33,7 +35,7 @@ public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
             throw new IllegalStateException("Invoice is already paid");
         }
 
-        if(invoice.status() != InvoiceStatus.ISSUED) {
+        if (invoice.status() != InvoiceStatus.ISSUED) {
             throw new IllegalStateException("Only issued invoices can be paid");
         }
 
@@ -43,15 +45,17 @@ public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
         Account bank = accountRepository.findByCode(bankAccountCode)
                 .orElseThrow(() -> new IllegalStateException("Bank account not found: " + bankAccountCode));
 
-        accountingService.transfer(
+        accountingService.postTransfer(
                 bank.id(),
                 receivable.id(),
                 invoice.total(),
                 JournalType.BANK,
-                "Payment of invoice " + invoice.number()
+                "Payment of invoice " + invoice.number(),
+                paymentDate
         );
 
         SalesInvoice paid = invoice.markPaid();
         salesInvoiceRepository.save(paid);
     }
+
 }

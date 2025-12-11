@@ -10,6 +10,7 @@ import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.ledger.LedgerEntry;
+import fr.kovelya.accounting.domain.period.PeriodStatus;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
 import fr.kovelya.accounting.domain.repository.AccountingPeriodRepository;
@@ -47,34 +48,39 @@ public final class AccountingServiceImpl implements AccountingService {
     }
 
     @Override
-    public void transfer(AccountId from, AccountId to, Money amount, JournalType journalType, String description) {
+    public void postTransfer(AccountId debitAccountId, AccountId creditAccountId, Money amount, JournalType journalType, String description, LocalDate transactionDate) {
         if (amount.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
 
-        Account fromAccount = accountRepository.findById(from)
-                .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
-        Account toAccount = accountRepository.findById(to)
-                .orElseThrow(() -> new IllegalArgumentException("Destination account not found"));
+        Account debitAccount = accountRepository.findById(debitAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Debit account not found"));
+        Account creditAccount = accountRepository.findById(creditAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Credit account not found"));
 
-        if (!fromAccount.currency().equals(toAccount.currency())) {
+        if (!debitAccount.currency().equals(creditAccount.currency())) {
             throw new IllegalArgumentException("Currency mismatch between accounts");
         }
 
-        if (!fromAccount.currency().equals(amount.currency())) {
+        if (!debitAccount.currency().equals(amount.currency())) {
             throw new IllegalArgumentException("Currency mismatch between account and amount");
         }
 
-        AccountPosting debit = new AccountPosting(from, amount, LedgerEntry.Direction.DEBIT);
-        AccountPosting credit = new AccountPosting(to, amount, LedgerEntry.Direction.CREDIT);
+        AccountPosting debit = new AccountPosting(debitAccountId, amount, LedgerEntry.Direction.DEBIT);
+        AccountPosting credit = new AccountPosting(creditAccountId, amount, LedgerEntry.Direction.CREDIT);
 
-        postJournalTransaction(journalType, description, debit, credit);
+        postJournalTransaction(journalType, description, transactionDate, debit, credit);
     }
 
+
     @Override
-    public void postJournalTransaction(JournalType journalType, String description, AccountPosting... postings) {
+    public void postJournalTransaction(JournalType journalType, String description, LocalDate transactionDate, AccountPosting... postings) {
         if (postings == null || postings.length < 2) {
             throw new IllegalArgumentException("At least two postings are required");
+        }
+
+        if (transactionDate == null) {
+            throw new IllegalArgumentException("Transaction date is required");
         }
 
         Instant now = Instant.now();
@@ -88,10 +94,10 @@ public final class AccountingServiceImpl implements AccountingService {
             if (currency == null) {
                 currency = account.currency();
             } else if (!account.currency().equals(currency)) {
-                throw new IllegalArgumentException("Akk accounts in a transaction must share the same currency");
+                throw new IllegalArgumentException("All accounts in a transaction must share the same currency");
             }
 
-            if(!posting.amount().currency().equals(currency)) {
+            if (!posting.amount().currency().equals(currency)) {
                 throw new IllegalArgumentException("Posting amount currency must match account currency");
             }
 
@@ -107,12 +113,21 @@ public final class AccountingServiceImpl implements AccountingService {
             entries.add(entry);
         }
 
+        AccountingPeriod period = accountingPeriodRepository.findByDate(transactionDate)
+                .orElseThrow(() -> new IllegalStateException("No accounting period covering date " + transactionDate));
+
+        if (period.status() != PeriodStatus.OPEN) {
+            throw new IllegalStateException("Accounting period " + period.name() + " is not open");
+        }
+
         String reference = "TX-" + now.toEpochMilli();
         JournalTransaction transaction = JournalTransaction.create(
                 journalType,
                 reference,
                 description,
                 now,
+                transactionDate,
+                period.id(),
                 entries
         );
         journalTransactionRepository.save(transaction);
