@@ -9,6 +9,8 @@ import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.shared.Money;
+import fr.kovelya.accounting.domain.tax.TaxCategory;
+import fr.kovelya.accounting.domain.tax.VatRate;
 import fr.kovelya.accounting.infrastructure.persistence.memory.*;
 
 import java.math.BigDecimal;
@@ -38,12 +40,16 @@ public class ConsoleApp {
                 Currency.getInstance("EUR")
         );
 
+        VatRate vatRate20 = VatRate.ofFraction(new BigDecimal("0.20"));
+
         InvoicePostingService invoicePostingService = new InvoicePostingServiceImpl(
                 salesInvoiceRepository,
                 accountRepository,
                 accountingService,
                 "4110",
-                "7060"
+                "7060",
+                "4457",
+                vatRate20
         );
 
         InvoicePaymentService invoicePaymentService = new InvoicePaymentServiceImpl(
@@ -63,6 +69,7 @@ public class ConsoleApp {
         Account bank = accountingService.openAccount("5121", "Bank", "EUR", AccountType.ASSET);
         Account receivable = accountingService.openAccount("4110", "Accounts Receivable", "EUR", AccountType.ASSET);
         Account revenue = accountingService.openAccount("7060", "Sales Revenue", "EUR", AccountType.INCOME);
+        Account vatCollected = accountingService.openAccount("4457", "VAT Collected", "EUR", AccountType.LIABILITY);
 
         Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
         accountingService.transfer(bank.id(), cash.id(), amount, JournalType.GENERAL, "Initial transfer");
@@ -74,8 +81,9 @@ public class ConsoleApp {
                 customer.id(),
                 LocalDate.of(2025, 1, 15),
                 LocalDate.of(2025, 2, 15),
-                new InvoiceLineRequest("Website development", new BigDecimal("1500.00")),
-                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"))
+                new InvoiceLineRequest("Website development", new BigDecimal("1500.00"), TaxCategory.STANDARD),
+                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"), TaxCategory.STANDARD),
+                new InvoiceLineRequest("Maintenance plan", new BigDecimal("200.00"), TaxCategory.EXEMPT)
         );
 
         invoicePostingService.postInvoice(invoice.id());

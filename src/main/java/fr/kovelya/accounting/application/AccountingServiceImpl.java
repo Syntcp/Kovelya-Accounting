@@ -62,33 +62,56 @@ public final class AccountingServiceImpl implements AccountingService {
             throw new IllegalArgumentException("Currency mismatch between account and amount");
         }
 
+        AccountPosting debit = new AccountPosting(from, amount, LedgerEntry.Direction.DEBIT);
+        AccountPosting credit = new AccountPosting(to, amount, LedgerEntry.Direction.CREDIT);
+
+        postJournalTransaction(journalType, description, debit, credit);
+    }
+
+    @Override
+    public void postJournalTransaction(JournalType journalType, String description, AccountPosting... postings) {
+        if (postings == null || postings.length < 2) {
+            throw new IllegalArgumentException("At least two postings are required");
+        }
+
         Instant now = Instant.now();
-
-        LedgerEntry debit = LedgerEntry.create(
-                from,
-                amount,
-                LedgerEntry.Direction.DEBIT,
-                description,
-                now
-        );
-
-        LedgerEntry credit = LedgerEntry.create(
-                to,
-                amount,
-                LedgerEntry.Direction.CREDIT,
-                description,
-                now
-        );
-
-        ledgerEntryRepository.save(debit);
-        ledgerEntryRepository.save(credit);
-
         List<LedgerEntry> entries = new ArrayList<>();
-        entries.add(debit);
-        entries.add(credit);
+        Currency currency = null;
+
+        for (AccountPosting posting : postings) {
+            Account account = accountRepository.findById(posting.accountId())
+                    .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+            if (currency == null) {
+                currency = account.currency();
+            } else if (!account.currency().equals(currency)) {
+                throw new IllegalArgumentException("Akk accounts in a transaction must share the same currency");
+            }
+
+            if(!posting.amount().currency().equals(currency)) {
+                throw new IllegalArgumentException("Posting amount currency must match account currency");
+            }
+
+            LedgerEntry entry = LedgerEntry.create(
+                    posting.accountId(),
+                    posting.amount(),
+                    posting.direction(),
+                    description,
+                    now
+            );
+
+            ledgerEntryRepository.save(entry);
+            entries.add(entry);
+        }
 
         String reference = "TX-" + now.toEpochMilli();
-        JournalTransaction transaction = JournalTransaction.create(journalType, reference, description, now, entries);
+        JournalTransaction transaction = JournalTransaction.create(
+                journalType,
+                reference,
+                description,
+                now,
+                entries
+        );
         journalTransactionRepository.save(transaction);
     }
 

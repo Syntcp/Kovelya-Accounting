@@ -47,7 +47,7 @@ public final class InvoicingServiceImpl implements InvoicingService {
         List<InvoiceLine> lines = new ArrayList<>();
         for (InvoiceLineRequest req : lineRequests) {
             Money amount = Money.of(req.amount(), defaultCurrency);
-            lines.add(new InvoiceLine(req.description(), amount));
+            lines.add(new InvoiceLine(req.description(), amount, req.taxCategory()));
         }
         SalesInvoice invoice = SalesInvoice.draft(number, customerId, issueDate, dueDate, lines);
         return salesInvoiceRepository.save(invoice);

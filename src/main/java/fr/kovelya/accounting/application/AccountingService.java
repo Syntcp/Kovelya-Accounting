@@ -17,6 +17,8 @@ public interface AccountingService {
 
     void transfer(AccountId from, AccountId to, Money amount, JournalType journalType, String description);
 
+    void postJournalTransaction(JournalType journalType, String description, AccountPosting... postings);
+
     Money getBalance(AccountId accountId);
 
     Money getBalanceForPeriod(AccountId accountId, AccountingPeriod period);
