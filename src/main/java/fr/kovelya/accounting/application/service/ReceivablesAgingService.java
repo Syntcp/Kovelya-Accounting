@@ -1,4 +1,6 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service;
+
+import fr.kovelya.accounting.application.report.CustomerReceivableAgingView;
 
 import java.time.LocalDate;
 import java.util.List;

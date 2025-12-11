@@ -1,6 +1,10 @@
 package fr.kovelya.accounting.bootstrap;
 
-import fr.kovelya.accounting.application.*;
+import fr.kovelya.accounting.application.dto.InvoiceLineRequest;
+import fr.kovelya.accounting.application.report.AccountBalanceView;
+import fr.kovelya.accounting.application.report.CustomerReceivableAgingView;
+import fr.kovelya.accounting.application.service.*;
+import fr.kovelya.accounting.application.service.impl.*;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountType;
 import fr.kovelya.accounting.domain.customer.Customer;

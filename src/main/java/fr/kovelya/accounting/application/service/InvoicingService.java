@@ -1,5 +1,6 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service;
 
+import fr.kovelya.accounting.application.dto.InvoiceLineRequest;
 import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.customer.CustomerId;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;

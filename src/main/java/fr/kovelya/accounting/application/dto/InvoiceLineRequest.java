@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.dto;
 
 import fr.kovelya.accounting.domain.tax.TaxCategory;
 

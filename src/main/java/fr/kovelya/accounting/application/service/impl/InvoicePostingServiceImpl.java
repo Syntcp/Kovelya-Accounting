@@ -1,5 +1,8 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service.impl;
 
+import fr.kovelya.accounting.application.dto.AccountPosting;
+import fr.kovelya.accounting.application.service.AccountingService;
+import fr.kovelya.accounting.application.service.InvoicePostingService;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.invoice.InvoiceLine;
 import fr.kovelya.accounting.domain.invoice.InvoiceStatus;
@@ -16,7 +19,7 @@ import fr.kovelya.accounting.domain.tax.VatRate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public final class InvoicePostingServiceImpl implements InvoicePostingService{
+public final class InvoicePostingServiceImpl implements InvoicePostingService {
 
     private final SalesInvoiceRepository salesInvoiceRepository;
     private final AccountRepository accountRepository;

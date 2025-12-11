@@ -1,5 +1,7 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service.impl;
 
+import fr.kovelya.accounting.application.service.AccountingService;
+import fr.kovelya.accounting.application.service.InvoicePaymentService;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.invoice.InvoiceStatus;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;
@@ -8,7 +10,7 @@ import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
 import fr.kovelya.accounting.domain.repository.SalesInvoiceRepository;
 
-public final class InvoicePaymentServiceImpl implements InvoicePaymentService{
+public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
 
     private final SalesInvoiceRepository salesInvoiceRepository;
     private final AccountRepository accountRepository;

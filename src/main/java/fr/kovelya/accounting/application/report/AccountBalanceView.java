@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.report;
 
 import fr.kovelya.accounting.domain.account.AccountType;
 import fr.kovelya.accounting.domain.shared.Money;

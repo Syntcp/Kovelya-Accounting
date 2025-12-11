@@ -1,5 +1,7 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service.impl;
 
+import fr.kovelya.accounting.application.report.CustomerReceivableAgingView;
+import fr.kovelya.accounting.application.service.ReceivablesAgingService;
 import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.customer.CustomerId;
 import fr.kovelya.accounting.domain.invoice.InvoiceStatus;

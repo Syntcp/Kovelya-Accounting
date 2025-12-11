@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.report;
 
 public enum AgingBucket {
     NOT_DUE,

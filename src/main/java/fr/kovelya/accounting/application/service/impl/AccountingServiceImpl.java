@@ -1,5 +1,8 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service.impl;
 
+import fr.kovelya.accounting.application.report.AccountBalanceView;
+import fr.kovelya.accounting.application.dto.AccountPosting;
+import fr.kovelya.accounting.application.service.AccountingService;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountId;
 import fr.kovelya.accounting.domain.account.AccountType;

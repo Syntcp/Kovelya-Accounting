@@ -1,4 +1,4 @@
-package fr.kovelya.accounting.application;
+package fr.kovelya.accounting.application.service;
 
 import fr.kovelya.accounting.domain.invoice.SalesInvoiceId;
 
