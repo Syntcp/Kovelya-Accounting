@@ -1,6 +1,7 @@
 package fr.kovelya.accounting.bootstrap;
 
 import fr.kovelya.accounting.application.dto.InvoiceLineRequest;
+import fr.kovelya.accounting.application.dto.PurchaseInvoiceLineRequest;
 import fr.kovelya.accounting.application.report.AccountBalanceView;
 import fr.kovelya.accounting.application.report.CustomerReceivableAgingView;
 import fr.kovelya.accounting.application.service.*;
@@ -12,7 +13,9 @@ import fr.kovelya.accounting.domain.invoice.SalesInvoice;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
+import fr.kovelya.accounting.domain.purchase.PurchaseInvoice;
 import fr.kovelya.accounting.domain.shared.Money;
+import fr.kovelya.accounting.domain.supplier.Supplier;
 import fr.kovelya.accounting.domain.tax.TaxCategory;
 import fr.kovelya.accounting.domain.tax.VatRate;
 import fr.kovelya.accounting.infrastructure.persistence.memory.*;
@@ -30,6 +33,8 @@ public class ConsoleApp {
         InMemoryAccountingPeriodRepository periodRepository = new InMemoryAccountingPeriodRepository();
         InMemoryCustomerRepository customerRepository = new InMemoryCustomerRepository();
         InMemorySalesInvoiceRepository salesInvoiceRepository = new InMemorySalesInvoiceRepository();
+        InMemorySupplierRepository supplierRepository = new InMemorySupplierRepository();
+        InMemoryPurchaseInvoiceRepository purchaseInvoiceRepository = new InMemoryPurchaseInvoiceRepository();
 
         AccountingService accountingService = new AccountingServiceImpl(
                 accountRepository,
@@ -68,6 +73,22 @@ public class ConsoleApp {
                 salesInvoiceRepository
         );
 
+        PurchasingService purchasingService = new PurchasingServiceImpl(
+                supplierRepository,
+                purchaseInvoiceRepository,
+                Currency.getInstance("EUR")
+        );
+
+        PurchaseInvoicePostingService purchaseInvoicePostingService = new PurchaseInvoicePostingServiceImpl(
+                purchaseInvoiceRepository,
+                accountRepository,
+                accountingService,
+                "4010",
+                "6060",
+                "4456",
+                vatRate20
+        );
+
         AccountingPeriod fy2025 = accountingService.createPeriod(
                 "FY-2025",
                 LocalDate.of(2025, 1, 1),
@@ -79,6 +100,9 @@ public class ConsoleApp {
         Account receivable = accountingService.openAccount("4110", "Accounts Receivable", "EUR", AccountType.ASSET);
         Account revenue = accountingService.openAccount("7060", "Sales Revenue", "EUR", AccountType.INCOME);
         Account vatCollected = accountingService.openAccount("4457", "VAT Collected", "EUR", AccountType.LIABILITY);
+        Account payable = accountingService.openAccount("4010", "Suppliers Payable", "EUR", AccountType.LIABILITY);
+        Account expense = accountingService.openAccount("6060", "Subcontracting", "EUR", AccountType.EXPENSE);
+        Account vatDeductible = accountingService.openAccount("4456", "VAT Deductible", "EUR", AccountType.ASSET);
 
         Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
         accountingService.transfer(bank.id(), cash.id(), amount, JournalType.GENERAL, "Initial transfer");
@@ -106,6 +130,18 @@ public class ConsoleApp {
         );
 
         invoicePostingService.postInvoice(invoice2.id());
+
+        Supplier supplier = purchasingService.createSupplier("SUP-001", "Web Services Ltd");
+
+        PurchaseInvoice purchaseInvoice = purchasingService.createDraftPurchaseInvoice(
+                "PINV-2025-0001",
+                supplier,
+                LocalDate.of(2025, 2, 10),
+                LocalDate.of(2025, 2, 28),
+                new PurchaseInvoiceLineRequest("Subcontracting work", new BigDecimal("1200.00"), TaxCategory.STANDARD)
+        );
+
+        purchaseInvoicePostingService.postPurchaseInvoice(purchaseInvoice.id());
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
@@ -148,6 +184,16 @@ public class ConsoleApp {
         System.out.println("Sales invoices:");
         for (SalesInvoice inv : invoicingService.listInvoices()) {
             System.out.println(inv.number() + " - " + inv.status() + " - total: " + inv.total());
+        }
+
+        System.out.println("Suppliers:");
+        for (Supplier s : purchasingService.listSuppliers()) {
+            System.out.println(s.code() + " - " + s.name());
+        }
+
+        System.out.println("Purchase invoices:");
+        for (PurchaseInvoice pinv : purchasingService.listPurchaseInvoices()) {
+            System.out.println(pinv.number() + " - " + pinv.status() + " - total: " + pinv.total());
         }
 
         LocalDate asOfDate = LocalDate.of(2025, 3, 15);
