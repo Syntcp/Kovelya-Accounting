@@ -6,6 +6,7 @@ import fr.kovelya.accounting.application.report.AccountBalanceView;
 import fr.kovelya.accounting.application.report.BalanceSheetView;
 import fr.kovelya.accounting.application.report.CustomerReceivableAgingView;
 import fr.kovelya.accounting.application.report.IncomeStatementView;
+import fr.kovelya.accounting.application.report.SupplierPayableAgingView;
 import fr.kovelya.accounting.application.service.*;
 import fr.kovelya.accounting.application.service.impl.*;
 import fr.kovelya.accounting.domain.account.Account;
@@ -100,6 +101,11 @@ public class ConsoleApp {
 
         FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(
                 accountingService
+        );
+
+        PayablesAgingService payablesAgingService = new PayablesAgingServiceImpl(
+                supplierRepository,
+                purchaseInvoiceRepository
         );
 
         AccountingPeriod fy2025 = accountingService.createPeriod(
@@ -228,6 +234,20 @@ public class ConsoleApp {
             System.out.println(
                     view.customer().code()
                             + " - " + view.customer().name()
+                            + " | not due: " + view.notDue()
+                            + " | 0-30: " + view.due0_30()
+                            + " | 31-60: " + view.due31_60()
+                            + " | 61-90: " + view.due61_90()
+                            + " | 90+: " + view.due90Plus()
+                            + " | total: " + view.total()
+            );
+        }
+
+        System.out.println("Payables aging as of " + asOfDate + ":");
+        for (SupplierPayableAgingView view : payablesAgingService.getSupplierAging(asOfDate)) {
+            System.out.println(
+                    view.supplier().code()
+                            + " - " + view.supplier().name()
                             + " | not due: " + view.notDue()
                             + " | 0-30: " + view.due0_30()
                             + " | 31-60: " + view.due31_60()
