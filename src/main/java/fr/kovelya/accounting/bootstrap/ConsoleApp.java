@@ -89,6 +89,13 @@ public class ConsoleApp {
                 vatRate20
         );
 
+        PurchaseInvoicePaymentService purchaseInvoicePaymentService = new PurchaseInvoicePaymentServiceImpl(
+                purchaseInvoiceRepository,
+                accountRepository,
+                accountingService,
+                "4010"
+        );
+
         AccountingPeriod fy2025 = accountingService.createPeriod(
                 "FY-2025",
                 LocalDate.of(2025, 1, 1),
@@ -142,6 +149,7 @@ public class ConsoleApp {
         );
 
         purchaseInvoicePostingService.postPurchaseInvoice(purchaseInvoice.id());
+        purchaseInvoicePaymentService.recordPayment(purchaseInvoice.id(), "5121");
 
         System.out.println("Kovelya Extreme Accounting is alive");
 

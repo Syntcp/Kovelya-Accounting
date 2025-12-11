@@ -55,7 +55,7 @@ public final class PurchaseInvoice {
         return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.ISSUED);
     }
 
-    public PurchaseInvoice paid() {
+    public PurchaseInvoice markPaid() {
         if (status != PurchaseInvoiceStatus.ISSUED) {
             throw new IllegalArgumentException("Only issued invoices can be paid");
         }
