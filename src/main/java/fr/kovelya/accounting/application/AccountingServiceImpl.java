@@ -98,17 +98,27 @@ public final class AccountingServiceImpl implements AccountingService {
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
 
         List<LedgerEntry> entries = ledgerEntryRepository.findByAccount(accountId);
-        Money balance = Money.zero(account.currency());
+
+        BigDecimal debitTotal = BigDecimal.ZERO;
+        BigDecimal creditTotal = BigDecimal.ZERO;
 
         for (LedgerEntry entry : entries) {
+            BigDecimal amount = entry.amount().amount();
             if (entry.direction() == LedgerEntry.Direction.DEBIT) {
-                balance = balance.subtract(entry.amount());
+                debitTotal = debitTotal.add(amount);
             } else {
-                balance = balance.add(entry.amount());
+                creditTotal = creditTotal.add(amount);
             }
         }
 
-        return balance;
+        BigDecimal net;
+        AccountType type = account.type();
+        if (type == AccountType.ASSET || type == AccountType.EXPENSE) {
+            net = debitTotal.subtract(creditTotal);
+        } else {
+            net = creditTotal.subtract(debitTotal);
+        }
+        return Money.of(net, account.currency());
     }
 
     @Override
@@ -121,17 +131,27 @@ public final class AccountingServiceImpl implements AccountingService {
         Instant to = period.endDate().plusDays(1).atStartOfDay(zone).minusNanos(1).toInstant();
 
         List<LedgerEntry> entries = ledgerEntryRepository.findByAccountAndPeriod(accountId, from, to);
-        Money balance = Money.zero(account.currency());
+
+        BigDecimal debitTotal = BigDecimal.ZERO;
+        BigDecimal creditTotal = BigDecimal.ZERO;
 
         for (LedgerEntry entry : entries) {
+            BigDecimal amount = entry.amount().amount();
             if (entry.direction() == LedgerEntry.Direction.DEBIT) {
-                balance = balance.subtract(entry.amount());
+                debitTotal = debitTotal.add(amount);
             } else {
-                balance = balance.add(entry.amount());
+                creditTotal = creditTotal.add(amount);
             }
         }
 
-        return balance;
+        BigDecimal net;
+        AccountType type = account.type();
+        if (type == AccountType.ASSET || type == AccountType.EXPENSE) {
+            net = debitTotal.subtract(creditTotal);
+        } else {
+            net = creditTotal.subtract(debitTotal);
+        }
+        return Money.of(net, account.currency());
     }
 
     @Override

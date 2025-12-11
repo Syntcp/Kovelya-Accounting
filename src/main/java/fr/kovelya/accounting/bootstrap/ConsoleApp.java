@@ -46,6 +46,13 @@ public class ConsoleApp {
                 "7060"
         );
 
+        InvoicePaymentService invoicePaymentService = new InvoicePaymentServiceImpl(
+                salesInvoiceRepository,
+                accountRepository,
+                accountingService,
+                "4110"
+        );
+
         AccountingPeriod fy2025 = accountingService.createPeriod(
                 "FY-2025",
                 LocalDate.of(2025, 1, 1),
@@ -58,7 +65,7 @@ public class ConsoleApp {
         Account revenue = accountingService.openAccount("7060", "Sales Revenue", "EUR", AccountType.INCOME);
 
         Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
-        accountingService.transfer(cash.id(), bank.id(), amount, JournalType.GENERAL, "Initial transfer");
+        accountingService.transfer(bank.id(), cash.id(), amount, JournalType.GENERAL, "Initial transfer");
 
         Customer customer = invoicingService.createCustomer("CUST-001", "Acme Corp");
 
@@ -72,6 +79,7 @@ public class ConsoleApp {
         );
 
         invoicePostingService.postInvoice(invoice.id());
+        invoicePaymentService.recordPayment(invoice.id(), "5121");
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
@@ -102,8 +110,7 @@ public class ConsoleApp {
             System.out.println(
                     line.accountCode()
                             + " - " + line.accountName()
-                            + " - " + line.accountType()
-                            + " - balance: " + line.balance()
+                            + " - " + line.accountType() + " - balance: " + line.balance()
             );
         }
 
