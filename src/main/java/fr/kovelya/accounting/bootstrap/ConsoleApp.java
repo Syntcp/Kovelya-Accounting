@@ -3,7 +3,9 @@ package fr.kovelya.accounting.bootstrap;
 import fr.kovelya.accounting.application.dto.InvoiceLineRequest;
 import fr.kovelya.accounting.application.dto.PurchaseInvoiceLineRequest;
 import fr.kovelya.accounting.application.report.AccountBalanceView;
+import fr.kovelya.accounting.application.report.BalanceSheetView;
 import fr.kovelya.accounting.application.report.CustomerReceivableAgingView;
+import fr.kovelya.accounting.application.report.IncomeStatementView;
 import fr.kovelya.accounting.application.service.*;
 import fr.kovelya.accounting.application.service.impl.*;
 import fr.kovelya.accounting.domain.account.Account;
@@ -96,6 +98,10 @@ public class ConsoleApp {
                 "4010"
         );
 
+        FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(
+                accountingService
+        );
+
         AccountingPeriod fy2025 = accountingService.createPeriod(
                 "FY-2025",
                 LocalDate.of(2025, 1, 1),
@@ -183,6 +189,18 @@ public class ConsoleApp {
                             + " - " + line.accountType() + " - balance: " + line.balance()
             );
         }
+
+        IncomeStatementView incomeStatement = financialStatementsService.getIncomeStatement(fy2025);
+        System.out.println("Income statement for " + fy2025.name() + ":");
+        System.out.println("Total revenue: " + incomeStatement.totalRevenue());
+        System.out.println("Total expenses: " + incomeStatement.totalExpenses());
+        System.out.println("Net income: " + incomeStatement.netIncome());
+
+        BalanceSheetView balanceSheet = financialStatementsService.getBalanceSheet(fy2025);
+        System.out.println("Balance sheet for " + fy2025.name() + ":");
+        System.out.println("Total assets: " + balanceSheet.totalAssets());
+        System.out.println("Total liabilities: " + balanceSheet.totalLiabilities());
+        System.out.println("Derived equity: " + balanceSheet.derivedEquity());
 
         System.out.println("Customers:");
         for (Customer c : invoicingService.listCustomers()) {
