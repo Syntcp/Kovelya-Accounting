@@ -61,6 +61,7 @@ public final class FinancialStatementsServiceImpl implements FinancialStatements
         Currency currency = null;
         BigDecimal assetsAmount = BigDecimal.ZERO;
         BigDecimal liabilitiesAmount = BigDecimal.ZERO;
+        BigDecimal equityAmount = BigDecimal.ZERO;
 
         for (Account account : accountingService.listAccounts()) {
             Money balance = accountingService.getBalanceForPeriod(account.id(), period);
@@ -78,6 +79,8 @@ public final class FinancialStatementsServiceImpl implements FinancialStatements
                 assetsAmount = assetsAmount.add(balance.amount());
             } else if (account.type() == AccountType.LIABILITY) {
                 liabilitiesAmount = liabilitiesAmount.add(balance.amount());
+            } else if (account.type() == AccountType.EQUITY) {
+                equityAmount = equityAmount.add(balance.amount());
             }
         }
 
@@ -87,8 +90,10 @@ public final class FinancialStatementsServiceImpl implements FinancialStatements
 
         Money totalAssets = Money.of(assetsAmount, currency);
         Money totalLiabilities = Money.of(liabilitiesAmount, currency);
+        Money totalEquity = Money.of(equityAmount, currency);
         Money derivedEquity = totalAssets.subtract(totalLiabilities);
 
-        return new BalanceSheetView(period, totalAssets, totalLiabilities, derivedEquity);
+        return new BalanceSheetView(period, totalAssets, totalLiabilities, totalEquity, derivedEquity);
     }
+
 }

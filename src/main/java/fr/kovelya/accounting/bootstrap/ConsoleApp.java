@@ -224,7 +224,8 @@ public class ConsoleApp {
         System.out.println("Balance sheet for " + fy2025.name() + ":");
         System.out.println("Total assets: " + balanceSheet.totalAssets());
         System.out.println("Total liabilities: " + balanceSheet.totalLiabilities());
-        System.out.println("Derived equity: " + balanceSheet.derivedEquity());
+        System.out.println("Total equity (accounts): " + balanceSheet.totalEquity());
+        System.out.println("Derived equity (A - L): " + balanceSheet.derivedEquity());
 
         System.out.println("Customers:");
         for (Customer c : invoicingService.listCustomers()) {
