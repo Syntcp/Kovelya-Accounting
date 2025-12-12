@@ -53,16 +53,20 @@ public final class SalesInvoice {
     }
 
     public SalesInvoice markPaid() {
-        if (status != InvoiceStatus.ISSUED) {
-            throw new IllegalStateException("Only issued invoices can be marked as paid");
+        if (status != InvoiceStatus.ISSUED && status != InvoiceStatus.PARTIALLY_PAID) {
+            throw new IllegalStateException("Only issued or partially paid invoices can be marked as paid");
         }
         return new SalesInvoice(id, number, customerId, issueDate, dueDate, lines, InvoiceStatus.PAID);
     }
 
-    public SalesInvoice cancel() {
-        if (status == InvoiceStatus.PAID) {
-            throw new IllegalStateException("Paid invoices cannot be cancelled");
+    public SalesInvoice markPartiallyPaid() {
+        if (status != InvoiceStatus.ISSUED && status != InvoiceStatus.PARTIALLY_PAID) {
+            throw new IllegalStateException("Only issued invoices can become partially paid");
         }
+        return new SalesInvoice(id, number, customerId, issueDate, dueDate, lines, InvoiceStatus.PARTIALLY_PAID);
+    }
+
+    public SalesInvoice cancel() {
         if (status != InvoiceStatus.DRAFT) {
             throw new IllegalStateException("Only draft invoices can be cancelled; use a credit not for issued invoices");
         }

@@ -56,10 +56,17 @@ public final class PurchaseInvoice {
     }
 
     public PurchaseInvoice markPaid() {
-        if (status != PurchaseInvoiceStatus.ISSUED) {
-            throw new IllegalArgumentException("Only issued invoices can be paid");
+        if (status != PurchaseInvoiceStatus.ISSUED && status != PurchaseInvoiceStatus.PARTIALLY_PAID) {
+            throw new IllegalArgumentException("Only issued or partially paid purchase invoices can be paid");
         }
         return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PAID);
+    }
+
+    public PurchaseInvoice markPartiallyPaid() {
+        if (status != PurchaseInvoiceStatus.ISSUED && status != PurchaseInvoiceStatus.PARTIALLY_PAID) {
+            throw new IllegalArgumentException("Only issued purchase invoices can become partially paid");
+        }
+        return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PARTIALLY_PAID);
     }
 
     public PurchaseInvoice cancel() {

@@ -38,6 +38,8 @@ public class ConsoleApp {
         InMemorySalesInvoiceRepository salesInvoiceRepository = new InMemorySalesInvoiceRepository();
         InMemorySupplierRepository supplierRepository = new InMemorySupplierRepository();
         InMemoryPurchaseInvoiceRepository purchaseInvoiceRepository = new InMemoryPurchaseInvoiceRepository();
+        InMemoryCustomerPaymentRepository customerPaymentRepository = new InMemoryCustomerPaymentRepository();
+        InMemorySupplierPaymentRepository supplierPaymentRepository = new InMemorySupplierPaymentRepository();
 
         AccountingService accountingService = new AccountingServiceImpl(
                 accountRepository,
@@ -68,12 +70,14 @@ public class ConsoleApp {
                 salesInvoiceRepository,
                 accountRepository,
                 accountingService,
+                customerPaymentRepository,
                 "4110"
         );
 
         ReceivablesAgingService receivablesAgingService = new ReceivablesAgingServiceImpl(
                 customerRepository,
-                salesInvoiceRepository
+                salesInvoiceRepository,
+                customerPaymentRepository
         );
 
         PurchasingService purchasingService = new PurchasingServiceImpl(
@@ -96,6 +100,7 @@ public class ConsoleApp {
                 purchaseInvoiceRepository,
                 accountRepository,
                 accountingService,
+                supplierPaymentRepository,
                 "4010"
         );
 
@@ -105,7 +110,8 @@ public class ConsoleApp {
 
         PayablesAgingService payablesAgingService = new PayablesAgingServiceImpl(
                 supplierRepository,
-                purchaseInvoiceRepository
+                purchaseInvoiceRepository,
+                supplierPaymentRepository
         );
 
         AccountingPeriod fy2025 = accountingService.createPeriod(

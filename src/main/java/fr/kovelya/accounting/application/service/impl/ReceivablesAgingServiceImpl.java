@@ -6,6 +6,8 @@ import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.customer.CustomerId;
 import fr.kovelya.accounting.domain.invoice.InvoiceStatus;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;
+import fr.kovelya.accounting.domain.payment.CustomerPayment;
+import fr.kovelya.accounting.domain.repository.CustomerPaymentRepository;
 import fr.kovelya.accounting.domain.repository.CustomerRepository;
 import fr.kovelya.accounting.domain.repository.SalesInvoiceRepository;
 import fr.kovelya.accounting.domain.shared.Money;
@@ -20,11 +22,13 @@ public final class ReceivablesAgingServiceImpl implements ReceivablesAgingServic
 
     private final CustomerRepository customerRepository;
     private final SalesInvoiceRepository salesInvoiceRepository;
+    private final CustomerPaymentRepository customerPaymentRepository;
 
     public ReceivablesAgingServiceImpl(CustomerRepository customerRepository,
-                                       SalesInvoiceRepository salesInvoiceRepository) {
+                                       SalesInvoiceRepository salesInvoiceRepository, CustomerPaymentRepository customerPaymentRepository) {
         this.customerRepository = customerRepository;
         this.salesInvoiceRepository = salesInvoiceRepository;
+        this.customerPaymentRepository = customerPaymentRepository;
     }
 
     @Override
@@ -53,11 +57,22 @@ public final class ReceivablesAgingServiceImpl implements ReceivablesAgingServic
         Money due90Plus = null;
 
         for (SalesInvoice invoice : invoices) {
-            if (invoice.status() == InvoiceStatus.PAID || invoice.status() == InvoiceStatus.CANCELLED) {
+            if (invoice.status() == InvoiceStatus.CANCELLED) {
                 continue;
             }
 
-            Money amount = invoice.total();
+            Money total = invoice.total();
+            Money paid = Money.zero(total.currency());
+
+            List<CustomerPayment> payments = customerPaymentRepository.findByInvoice(invoice.id());
+            for (CustomerPayment payment : payments) {
+                paid = paid.add(payment.amount());
+            }
+
+            Money amount = total.subtract(paid);
+            if (amount.amount().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
 
             if (notDue == null) {
                 notDue = Money.zero(amount.currency());
