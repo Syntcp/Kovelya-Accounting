@@ -46,7 +46,7 @@ public final class PeriodClosingServiceImpl implements PeriodClosingService {
 
         List<AccountPosting> postings = new ArrayList<>();
 
-        for (Account account : accountingService.listAccounts()) {
+        for (Account account : accountingService.listAccounts(period.ledgerId())) {
             if (account.type() != AccountType.INCOME && account.type() != AccountType.EXPENSE) {
                 continue;
             }
@@ -87,9 +87,13 @@ public final class PeriodClosingServiceImpl implements PeriodClosingService {
 
         if (!postings.isEmpty()) {
             LocalDate closingDate = period.endDate();
+            String reference = "CLOSE-" + period.name();
+            String description = "Closing entries for period " + period.name();
+
             accountingService.postJournalTransaction(
                     JournalType.ADJUSTMENT,
-                    "Closing entries for period " + period.name(),
+                    reference,
+                    description,
                     closingDate,
                     postings.toArray(new AccountPosting[0])
             );

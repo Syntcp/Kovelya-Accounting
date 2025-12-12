@@ -1,33 +1,42 @@
 package fr.kovelya.accounting.domain.supplier;
 
+import fr.kovelya.accounting.domain.ledger.LedgerId;
+
 import java.util.Objects;
 
 public final class Supplier {
 
     private final SupplierId id;
+    private final LedgerId ledgerId;
     private final String code;
     private final String name;
 
-    public Supplier(SupplierId id, String code, String name) {
-        this.id = Objects.requireNonNull(id);
-        this.code = Objects.requireNonNull(code);
-        this.name = Objects.requireNonNull(name);
-    }
-
-    public static Supplier create(String code, String name) {
+    public Supplier(SupplierId id, LedgerId ledgerId, String code, String name) {
+        if (ledgerId == null) {
+            throw new IllegalArgumentException("Ledger is required");
+        }
         if (code == null || code.isBlank()) {
             throw new IllegalArgumentException("Supplier code is required");
         }
-
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Supplier name is required");
         }
+        this.id = Objects.requireNonNull(id);
+        this.ledgerId = ledgerId;
+        this.code = code;
+        this.name = name;
+    }
 
-        return new Supplier(SupplierId.newId(), code, name);
+    public static Supplier create(LedgerId ledgerId, String code, String name) {
+        return new Supplier(SupplierId.newId(), ledgerId, code, name);
     }
 
     public SupplierId id() {
         return id;
+    }
+
+    public LedgerId ledgerId() {
+        return ledgerId;
     }
 
     public String code() {

@@ -97,9 +97,13 @@ public final class PurchaseInvoicePostingServiceImpl implements PurchaseInvoiceP
         AccountPosting debitVat = new AccountPosting(vatDeductible.id(), vat, LedgerEntry.Direction.DEBIT);
         AccountPosting creditPayable = new AccountPosting(payable.id(), gross, LedgerEntry.Direction.CREDIT);
 
+        String reference = "PINV-" + toPost.number();
+        String description = "Purchase invoice " + toPost.number();
+
         accountingService.postJournalTransaction(
                 JournalType.PURCHASES,
-                "Purchase invoice " + toPost.number(),
+                reference,
+                description,
                 toPost.issueDate(),
                 debitExpense,
                 debitVat,

@@ -15,10 +15,12 @@ import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
+import fr.kovelya.accounting.domain.ledger.LedgerId;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoice;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.supplier.Supplier;
+import fr.kovelya.accounting.domain.supplier.SupplierId;
 import fr.kovelya.accounting.domain.tax.TaxCategory;
 import fr.kovelya.accounting.domain.tax.VatRate;
 import fr.kovelya.accounting.infrastructure.persistence.memory.*;
@@ -26,6 +28,7 @@ import fr.kovelya.accounting.infrastructure.persistence.memory.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Currency;
+import java.util.UUID;
 
 public class ConsoleApp {
 
@@ -114,60 +117,63 @@ public class ConsoleApp {
                 supplierPaymentRepository
         );
 
+        LedgerId ledgerId = new LedgerId(UUID.randomUUID());
+
         AccountingPeriod fy2025 = accountingService.createPeriod(
+                ledgerId,
                 "FY-2025",
                 LocalDate.of(2025, 1, 1),
                 LocalDate.of(2025, 12, 31)
         );
 
-        Account cash = accountingService.openAccount("5300", "Cash", "EUR", AccountType.ASSET);
-        Account bank = accountingService.openAccount("5121", "Bank", "EUR", AccountType.ASSET);
-        Account receivable = accountingService.openAccount("4110", "Accounts Receivable", "EUR", AccountType.ASSET);
-        Account revenue = accountingService.openAccount("7060", "Sales Revenue", "EUR", AccountType.INCOME);
-        Account vatCollected = accountingService.openAccount("4457", "VAT Collected", "EUR", AccountType.LIABILITY);
-        Account payable = accountingService.openAccount("4010", "Suppliers Payable", "EUR", AccountType.LIABILITY);
-        Account expense = accountingService.openAccount("6060", "Subcontracting", "EUR", AccountType.EXPENSE);
-        Account vatDeductible = accountingService.openAccount("4456", "VAT Deductible", "EUR", AccountType.ASSET);
+        Account cash = accountingService.openAccount(ledgerId, "5300", "Cash", "EUR", AccountType.ASSET);
+        Account bank = accountingService.openAccount(ledgerId, "5121", "Bank", "EUR", AccountType.ASSET);
+        Account receivable = accountingService.openAccount(ledgerId, "4110", "Accounts Receivable", "EUR", AccountType.ASSET);
+        Account revenue = accountingService.openAccount(ledgerId, "7060", "Sales Revenue", "EUR", AccountType.INCOME);
+        Account vatCollected = accountingService.openAccount(ledgerId, "4457", "VAT Collected", "EUR", AccountType.LIABILITY);
+        Account payable = accountingService.openAccount(ledgerId, "4010", "Suppliers Payable", "EUR", AccountType.LIABILITY);
+        Account expense = accountingService.openAccount(ledgerId, "6060", "Subcontracting", "EUR", AccountType.EXPENSE);
+        Account vatDeductible = accountingService.openAccount(ledgerId, "4456", "VAT Deductible", "EUR", AccountType.ASSET);
 
-        Money amount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
+        Money initialAmount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
         accountingService.postTransfer(
                 bank.id(),
                 cash.id(),
-                amount,
+                initialAmount,
                 JournalType.GENERAL,
                 "Initial transfer",
                 LocalDate.of(2025, 1, 1)
         );
 
-
-        Customer customer = invoicingService.createCustomer("CUST-001", "Acme Corp");
+        Customer customer = invoicingService.createCustomer(ledgerId,"CUST-001", "Acme Corp");
 
         SalesInvoice invoice1 = invoicingService.createDraftInvoice(
+                ledgerId,
                 "INV-2025-0001",
                 customer.id(),
                 LocalDate.of(2025, 1, 15),
                 LocalDate.of(2025, 2, 15),
-                new InvoiceLineRequest("Website development", new BigDecimal("1500.00"), TaxCategory.STANDARD),
-                new InvoiceLineRequest("Maintenance plan", new BigDecimal("400.00"), TaxCategory.EXEMPT)
+                new InvoiceLineRequest("Consulting services", new BigDecimal("1000.00"), TaxCategory.STANDARD)
+        );
+
+        SalesInvoice invoice2 = invoicingService.createDraftInvoice(
+                ledgerId,
+                "INV-2025-0002",
+                customer.id(),
+                LocalDate.of(2025, 2, 10),
+                LocalDate.of(2025, 3, 10),
+                new InvoiceLineRequest("Maintenance services", new BigDecimal("500.00"), TaxCategory.STANDARD)
         );
 
         invoicePostingService.postInvoice(invoice1.id());
+        invoicePostingService.postInvoice(invoice2.id());
+
         invoicePaymentService.recordPayment(
                 invoice1.id(),
                 "5121",
-                LocalDate.of(2025, 2, 20)
+                Money.of(new BigDecimal("1000.00"), Currency.getInstance("EUR")),
+                LocalDate.of(2025, 2, 10)
         );
-
-
-        SalesInvoice invoice2 = invoicingService.createDraftInvoice(
-                "INV-2025-0002",
-                customer.id(),
-                LocalDate.of(2025, 2, 20),
-                LocalDate.of(2025, 3, 5),
-                new InvoiceLineRequest("SEO consulting", new BigDecimal("800.00"), TaxCategory.STANDARD)
-        );
-
-        invoicePostingService.postInvoice(invoice2.id());
 
         invoicePaymentService.recordPayment(
                 invoice2.id(),
@@ -176,12 +182,12 @@ public class ConsoleApp {
                 LocalDate.of(2025, 3, 1)
         );
 
-
-        Supplier supplier = purchasingService.createSupplier("SUP-001", "Web Services Ltd");
+        Supplier supplier = purchasingService.createSupplier(ledgerId, "SUP-001", "Web Services Ltd");
 
         PurchaseInvoice purchaseInvoice = purchasingService.createDraftPurchaseInvoice(
+                ledgerId,
                 "PINV-2025-0001",
-                supplier,
+                supplier.id(),
                 LocalDate.of(2025, 2, 10),
                 LocalDate.of(2025, 2, 28),
                 new PurchaseInvoiceLineRequest("Subcontracting work", new BigDecimal("1200.00"), TaxCategory.STANDARD)
@@ -194,23 +200,22 @@ public class ConsoleApp {
                 LocalDate.of(2025, 3, 5)
         );
 
-
         System.out.println("Kovelya Extreme Accounting is alive");
 
         System.out.println("Accounts (global balance):");
-        for (Account account : accountingService.listAccounts()) {
+        for (Account account : accountingService.listAccounts(ledgerId)) {
             Money balance = accountingService.getBalance(account.id());
             System.out.println(account.code() + " - " + account.name() + " - " + account.type() + " - balance: " + balance);
         }
 
         System.out.println("Accounts (balance in FY-2025):");
-        for (Account account : accountingService.listAccounts()) {
+        for (Account account : accountingService.listAccounts(ledgerId)) {
             Money periodBalance = accountingService.getBalanceForPeriod(account.id(), fy2025);
             System.out.println(account.code() + " - " + account.name() + " - " + account.type() + " - period balance: " + periodBalance);
         }
 
         System.out.println("Transactions:");
-        for (JournalTransaction transaction : accountingService.listTransactions()) {
+        for (JournalTransaction transaction : accountingService.listTransactions(ledgerId)) {
             System.out.println(
                     transaction.id().value()
                             + " - " + transaction.journalType()
@@ -220,7 +225,7 @@ public class ConsoleApp {
         }
 
         System.out.println("Trial balance for " + fy2025.name() + ":");
-        for (AccountBalanceView line : accountingService.getTrialBalance(fy2025)) {
+        for (AccountBalanceView line : accountingService.getTrialBalance(ledgerId, fy2025)) {
             System.out.println(
                     line.accountCode()
                             + " - " + line.accountName()
@@ -242,22 +247,22 @@ public class ConsoleApp {
         System.out.println("Derived equity (A - L): " + balanceSheet.derivedEquity());
 
         System.out.println("Customers:");
-        for (Customer c : invoicingService.listCustomers()) {
+        for (Customer c : invoicingService.listCustomers(ledgerId)) {
             System.out.println(c.code() + " - " + c.name());
         }
 
         System.out.println("Sales invoices:");
-        for (SalesInvoice inv : invoicingService.listInvoices()) {
+        for (SalesInvoice inv : invoicingService.listInvoices(ledgerId)) {
             System.out.println(inv.number() + " - " + inv.status() + " - total: " + inv.total());
         }
 
         System.out.println("Suppliers:");
-        for (Supplier s : purchasingService.listSuppliers()) {
+        for (Supplier s : purchasingService.listSuppliers(ledgerId)) {
             System.out.println(s.code() + " - " + s.name());
         }
 
         System.out.println("Purchase invoices:");
-        for (PurchaseInvoice pinv : purchasingService.listPurchaseInvoices()) {
+        for (PurchaseInvoice pinv : purchasingService.listPurchaseInvoices(ledgerId)) {
             System.out.println(pinv.number() + " - " + pinv.status() + " - total: " + pinv.total());
         }
 

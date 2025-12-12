@@ -26,7 +26,7 @@ public final class FinancialStatementsServiceImpl implements FinancialStatements
         BigDecimal revenueAmount = BigDecimal.ZERO;
         BigDecimal expenseAmount = BigDecimal.ZERO;
 
-        for (Account account : accountingService.listAccounts()) {
+        for (Account account : accountingService.listAccounts(period.ledgerId())) {
             Money balance = accountingService.getBalanceForPeriod(account.id(), period);
             if (balance.amount().compareTo(BigDecimal.ZERO) == 0) {
                 continue;
@@ -63,7 +63,7 @@ public final class FinancialStatementsServiceImpl implements FinancialStatements
         BigDecimal liabilitiesAmount = BigDecimal.ZERO;
         BigDecimal equityAmount = BigDecimal.ZERO;
 
-        for (Account account : accountingService.listAccounts()) {
+        for (Account account : accountingService.listAccounts(period.ledgerId())) {
             Money balance = accountingService.getBalanceForPeriod(account.id(), period);
             if (balance.amount().compareTo(BigDecimal.ZERO) == 0) {
                 continue;

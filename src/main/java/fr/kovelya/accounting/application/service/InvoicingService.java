@@ -5,19 +5,20 @@ import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.customer.CustomerId;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;
 import fr.kovelya.accounting.domain.invoice.SalesInvoiceId;
+import fr.kovelya.accounting.domain.ledger.LedgerId;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface InvoicingService {
 
-    Customer createCustomer(String code, String name);
+    Customer createCustomer(LedgerId ledgerId, String code, String name);
 
-    List<Customer> listCustomers();
+    List<Customer> listCustomers(LedgerId ledgerId);
 
-    SalesInvoice createDraftInvoice(String number, CustomerId customerId, LocalDate issueDate, LocalDate dueDate, InvoiceLineRequest... lines);
+    SalesInvoice createDraftInvoice(LedgerId ledgerId, String number, CustomerId customerId, LocalDate issueDate, LocalDate dueDate, InvoiceLineRequest... lines);
 
-    SalesInvoice createCreditNoteFromInvoice(String creditNoteNumber, SalesInvoiceId originalInvoiceId, LocalDate issueDate, LocalDate dueDate);
+    SalesInvoice createCreditNoteFromInvoice(LedgerId ledgerId, String creditNoteNumber, SalesInvoiceId originalInvoiceId, LocalDate issueDate, LocalDate dueDate);
 
-    List<SalesInvoice> listInvoices();
+    List<SalesInvoice> listInvoices(LedgerId ledgerId);
 }

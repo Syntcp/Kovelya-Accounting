@@ -1,10 +1,10 @@
 package fr.kovelya.accounting.domain.purchase;
 
+import fr.kovelya.accounting.domain.ledger.LedgerId;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.supplier.SupplierId;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +12,7 @@ import java.util.Objects;
 public final class PurchaseInvoice {
 
     private final PurchaseInvoiceId id;
+    private final LedgerId ledgerId;
     private final String number;
     private final SupplierId supplierId;
     private final LocalDate issueDate;
@@ -19,9 +20,25 @@ public final class PurchaseInvoice {
     private final List<PurchaseInvoiceLine> lines;
     private final PurchaseInvoiceStatus status;
 
-    public PurchaseInvoice(PurchaseInvoiceId id, String number, SupplierId supplierId, LocalDate issueDate, LocalDate dueDate, List<PurchaseInvoiceLine> lines, PurchaseInvoiceStatus status) {
+    public PurchaseInvoice(
+            PurchaseInvoiceId id,
+            LedgerId ledgerId,
+            String number,
+            SupplierId supplierId,
+            LocalDate issueDate,
+            LocalDate dueDate,
+            List<PurchaseInvoiceLine> lines,
+            PurchaseInvoiceStatus status
+    ) {
         this.id = Objects.requireNonNull(id);
-        this.number = Objects.requireNonNull(number);
+        if (ledgerId == null) {
+            throw new IllegalArgumentException("Ledger is required");
+        }
+        if (number == null || number.isBlank()) {
+            throw new IllegalArgumentException("Invoice number is required");
+        }
+        this.ledgerId = ledgerId;
+        this.number = number;
         this.supplierId = Objects.requireNonNull(supplierId);
         this.issueDate = Objects.requireNonNull(issueDate);
         this.dueDate = Objects.requireNonNull(dueDate);
@@ -29,44 +46,42 @@ public final class PurchaseInvoice {
         this.status = Objects.requireNonNull(status);
     }
 
-    public static PurchaseInvoice draft(String number, SupplierId supplierId, LocalDate issueDate, LocalDate dueDate, List<PurchaseInvoiceLine> lines) {
+    public static PurchaseInvoice draft(
+            LedgerId ledgerId,
+            String number,
+            SupplierId supplierId,
+            LocalDate issueDate,
+            LocalDate dueDate,
+            List<PurchaseInvoiceLine> lines
+    ) {
         if (number == null || number.isBlank()) {
             throw new IllegalArgumentException("Invoice number is required");
         }
         if (lines == null || lines.isEmpty()) {
             throw new IllegalArgumentException("At least one line is required");
         }
-
-        return new PurchaseInvoice(
-                PurchaseInvoiceId.newId(),
-                number,
-                supplierId,
-                issueDate,
-                dueDate,
-                new ArrayList<>(lines),
-                PurchaseInvoiceStatus.DRAFT
-        );
+        return new PurchaseInvoice(PurchaseInvoiceId.newId(), ledgerId, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.DRAFT);
     }
 
     public PurchaseInvoice issue() {
         if (status != PurchaseInvoiceStatus.DRAFT) {
-            throw new IllegalArgumentException("Only draft invoices can be issued");
+            throw new IllegalStateException("Only draft purchase invoices can be issued");
         }
-        return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.ISSUED);
+        return new PurchaseInvoice(id, ledgerId, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.ISSUED);
     }
 
     public PurchaseInvoice markPaid() {
         if (status != PurchaseInvoiceStatus.ISSUED && status != PurchaseInvoiceStatus.PARTIALLY_PAID) {
-            throw new IllegalArgumentException("Only issued or partially paid purchase invoices can be paid");
+            throw new IllegalStateException("Only issued or partially paid purchase invoices can be marked as paid");
         }
-        return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PAID);
+        return new PurchaseInvoice(id, ledgerId, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PAID);
     }
 
     public PurchaseInvoice markPartiallyPaid() {
         if (status != PurchaseInvoiceStatus.ISSUED && status != PurchaseInvoiceStatus.PARTIALLY_PAID) {
-            throw new IllegalArgumentException("Only issued purchase invoices can become partially paid");
+            throw new IllegalStateException("Only issued purchase invoices can become partially paid");
         }
-        return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PARTIALLY_PAID);
+        return new PurchaseInvoice(id, ledgerId, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PARTIALLY_PAID);
     }
 
     public PurchaseInvoice cancel() {
@@ -76,11 +91,15 @@ public final class PurchaseInvoice {
         if (status != PurchaseInvoiceStatus.DRAFT) {
             throw new IllegalArgumentException("Only draft purchase invoices can be cancelled");
         }
-        return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.CANCELLED);
+        return new PurchaseInvoice(id, ledgerId, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.CANCELLED);
     }
 
     public PurchaseInvoiceId id() {
         return id;
+    }
+
+    public LedgerId ledgerId() {
+        return ledgerId;
     }
 
     public String number() {
