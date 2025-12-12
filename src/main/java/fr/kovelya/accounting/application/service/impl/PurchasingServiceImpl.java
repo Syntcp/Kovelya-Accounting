@@ -3,7 +3,9 @@ package fr.kovelya.accounting.application.service.impl;
 import fr.kovelya.accounting.application.dto.PurchaseInvoiceLineRequest;
 import fr.kovelya.accounting.application.service.PurchasingService;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoice;
+import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceId;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceLine;
+import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceStatus;
 import fr.kovelya.accounting.domain.repository.PurchaseInvoiceRepository;
 import fr.kovelya.accounting.domain.repository.SupplierRepository;
 import fr.kovelya.accounting.domain.shared.Money;
@@ -52,6 +54,39 @@ public final class PurchasingServiceImpl implements PurchasingService {
                 lines
         );
         return purchaseInvoiceRepository.save(invoice);
+    }
+
+    @Override
+    public PurchaseInvoice createPurchaseCreditNoteFromInvoice(String creditNoteNumber, PurchaseInvoiceId originalInvoiceId, LocalDate issueDate, LocalDate dueDate) {
+        PurchaseInvoice original = purchaseInvoiceRepository.findById(originalInvoiceId)
+                .orElseThrow(() -> new IllegalArgumentException("Original purchase invoice not found"));
+
+        if (original.status() == PurchaseInvoiceStatus.DRAFT) {
+            throw new IllegalStateException("Cannot create credit note from draft purchase invoice");
+        }
+
+        if (original.status() == PurchaseInvoiceStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot create credit note from cancelled purchase invoice");
+        }
+
+        if (dueDate.isBefore(issueDate)) {
+            throw new IllegalArgumentException("Due date must be on or after issue date");
+        }
+
+        List<PurchaseInvoiceLine> creditLines = new ArrayList<>();
+        for (PurchaseInvoiceLine line : original.lines()) {
+            Money negAmount = line.amount().negate();
+            creditLines.add(new PurchaseInvoiceLine(line.description(), negAmount, line.taxCategory()));
+        }
+
+        PurchaseInvoice creditNote = PurchaseInvoice.draft(
+                creditNoteNumber,
+                original.supplierId(),
+                issueDate,
+                dueDate,
+                creditLines
+        );
+        return purchaseInvoiceRepository.save(creditNote);
     }
 
     @Override

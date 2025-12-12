@@ -63,6 +63,9 @@ public final class SalesInvoice {
         if (status == InvoiceStatus.PAID) {
             throw new IllegalStateException("Paid invoices cannot be cancelled");
         }
+        if (status != InvoiceStatus.DRAFT) {
+            throw new IllegalStateException("Only draft invoices can be cancelled; use a credit not for issued invoices");
+        }
         return new SalesInvoice(id, number, customerId, issueDate, dueDate, lines, InvoiceStatus.CANCELLED);
     }
 

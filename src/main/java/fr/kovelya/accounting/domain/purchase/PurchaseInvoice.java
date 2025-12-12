@@ -62,6 +62,16 @@ public final class PurchaseInvoice {
         return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.PAID);
     }
 
+    public PurchaseInvoice cancel() {
+        if (status == PurchaseInvoiceStatus.PAID) {
+            throw new IllegalArgumentException("Paid purchase invoices cannot be cancelled");
+        }
+        if (status != PurchaseInvoiceStatus.DRAFT) {
+            throw new IllegalArgumentException("Only draft purchase invoices can be cancelled");
+        }
+        return new PurchaseInvoice(id, number, supplierId, issueDate, dueDate, lines, PurchaseInvoiceStatus.CANCELLED);
+    }
+
     public PurchaseInvoiceId id() {
         return id;
     }
