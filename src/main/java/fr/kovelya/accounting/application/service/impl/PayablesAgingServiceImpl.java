@@ -2,9 +2,9 @@ package fr.kovelya.accounting.application.service.impl;
 
 import fr.kovelya.accounting.application.report.SupplierPayableAgingView;
 import fr.kovelya.accounting.application.service.PayablesAgingService;
+import fr.kovelya.accounting.domain.payment.SupplierPayment;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoice;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceStatus;
-import fr.kovelya.accounting.domain.payment.SupplierPayment;
 import fr.kovelya.accounting.domain.repository.PurchaseInvoiceRepository;
 import fr.kovelya.accounting.domain.repository.SupplierPaymentRepository;
 import fr.kovelya.accounting.domain.repository.SupplierRepository;
@@ -56,8 +56,7 @@ public final class PayablesAgingServiceImpl implements PayablesAgingService {
         Money due90Plus = null;
 
         for (PurchaseInvoice invoice : invoices) {
-            if (invoice.status() == PurchaseInvoiceStatus.PAID
-                    || invoice.status() == PurchaseInvoiceStatus.CANCELLED) {
+            if (invoice.status() == PurchaseInvoiceStatus.CANCELLED || invoice.status() == PurchaseInvoiceStatus.DRAFT) {
                 continue;
             }
 

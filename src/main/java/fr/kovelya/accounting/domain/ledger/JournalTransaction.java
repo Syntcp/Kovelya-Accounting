@@ -77,7 +77,6 @@ public final class JournalTransaction {
         );
     }
 
-
     public TransactionId id() {
         return id;
     }

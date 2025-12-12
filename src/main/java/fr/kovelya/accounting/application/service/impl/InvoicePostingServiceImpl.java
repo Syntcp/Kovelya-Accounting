@@ -100,11 +100,13 @@ public final class InvoicePostingServiceImpl implements InvoicePostingService {
 
         accountingService.postJournalTransaction(
                 JournalType.SALES,
+                toPost.number(),
                 "Invoice " + toPost.number(),
                 toPost.issueDate(),
                 debitReceivable,
                 creditRevenue,
                 creditVat
         );
+
     }
 }

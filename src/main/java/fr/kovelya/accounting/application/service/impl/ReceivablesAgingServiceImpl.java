@@ -24,8 +24,7 @@ public final class ReceivablesAgingServiceImpl implements ReceivablesAgingServic
     private final SalesInvoiceRepository salesInvoiceRepository;
     private final CustomerPaymentRepository customerPaymentRepository;
 
-    public ReceivablesAgingServiceImpl(CustomerRepository customerRepository,
-                                       SalesInvoiceRepository salesInvoiceRepository, CustomerPaymentRepository customerPaymentRepository) {
+    public ReceivablesAgingServiceImpl(CustomerRepository customerRepository, SalesInvoiceRepository salesInvoiceRepository, CustomerPaymentRepository customerPaymentRepository) {
         this.customerRepository = customerRepository;
         this.salesInvoiceRepository = salesInvoiceRepository;
         this.customerPaymentRepository = customerPaymentRepository;
@@ -57,7 +56,7 @@ public final class ReceivablesAgingServiceImpl implements ReceivablesAgingServic
         Money due90Plus = null;
 
         for (SalesInvoice invoice : invoices) {
-            if (invoice.status() == InvoiceStatus.CANCELLED) {
+            if (invoice.status() == InvoiceStatus.CANCELLED || invoice.status() == InvoiceStatus.DRAFT) {
                 continue;
             }
 

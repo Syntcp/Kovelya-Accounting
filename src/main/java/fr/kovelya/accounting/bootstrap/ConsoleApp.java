@@ -169,6 +169,14 @@ public class ConsoleApp {
 
         invoicePostingService.postInvoice(invoice2.id());
 
+        invoicePaymentService.recordPayment(
+                invoice2.id(),
+                "5121",
+                Money.of(new BigDecimal("300.00"), Currency.getInstance("EUR")),
+                LocalDate.of(2025, 3, 1)
+        );
+
+
         Supplier supplier = purchasingService.createSupplier("SUP-001", "Web Services Ltd");
 
         PurchaseInvoice purchaseInvoice = purchasingService.createDraftPurchaseInvoice(

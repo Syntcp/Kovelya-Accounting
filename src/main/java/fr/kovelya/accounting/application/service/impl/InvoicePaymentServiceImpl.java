@@ -81,13 +81,13 @@ public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
         accountingService.postTransfer(
                 bank.id(),
                 receivable.id(),
-                toPay,                                          // ✅ ici on utilise toPay
+                toPay,
                 JournalType.BANK,
                 "Payment of invoice " + invoice.number(),
                 paymentDate
         );
 
-        CustomerPayment payment = CustomerPayment.create(invoice.id(), toPay, paymentDate, bankAccountCode); // ✅ paymentDate
+        CustomerPayment payment = CustomerPayment.create(invoice.id(), toPay, paymentDate, bankAccountCode);
         customerPaymentRepository.save(payment);
 
         SalesInvoice updated;

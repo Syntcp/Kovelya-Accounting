@@ -6,6 +6,7 @@ import fr.kovelya.accounting.application.service.AccountingService;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountId;
 import fr.kovelya.accounting.domain.account.AccountType;
+import fr.kovelya.accounting.domain.ledger.LedgerId;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
@@ -41,9 +42,9 @@ public final class AccountingServiceImpl implements AccountingService {
     }
 
     @Override
-    public Account openAccount(String code, String name, String currencyCode, AccountType type) {
+    public Account openAccount(LedgerId ledgerId, String code, String name, String currencyCode, AccountType type) {
         Currency currency = Currency.getInstance(currencyCode);
-        Account account = Account.open(code, name, type, currency);
+        Account account = Account.open(ledgerId, code, name, type, currency);
         return accountRepository.save(account);
     }
 
@@ -69,18 +70,24 @@ public final class AccountingServiceImpl implements AccountingService {
         AccountPosting debit = new AccountPosting(debitAccountId, amount, LedgerEntry.Direction.DEBIT);
         AccountPosting credit = new AccountPosting(creditAccountId, amount, LedgerEntry.Direction.CREDIT);
 
-        postJournalTransaction(journalType, description, transactionDate, debit, credit);
+        String reference = buildTransferReference(journalType, debitAccount, creditAccount, transactionDate);
+
+        postJournalTransaction(journalType, reference, description, transactionDate, debit, credit);
     }
 
 
     @Override
-    public void postJournalTransaction(JournalType journalType, String description, LocalDate transactionDate, AccountPosting... postings) {
+    public void postJournalTransaction(JournalType journalType, String reference, String description, LocalDate transactionDate, AccountPosting... postings) {
         if (postings == null || postings.length < 2) {
             throw new IllegalArgumentException("At least two postings are required");
         }
 
         if (transactionDate == null) {
             throw new IllegalArgumentException("Transaction date is required");
+        }
+
+        if (reference == null || reference.isBlank()) {
+            throw new IllegalArgumentException("Reference is required");
         }
 
         Instant now = Instant.now();
@@ -120,7 +127,6 @@ public final class AccountingServiceImpl implements AccountingService {
             throw new IllegalStateException("Accounting period " + period.name() + " is not open");
         }
 
-        String reference = "TX-" + now.toEpochMilli();
         JournalTransaction transaction = JournalTransaction.create(
                 journalType,
                 reference,
@@ -196,31 +202,45 @@ public final class AccountingServiceImpl implements AccountingService {
     }
 
     @Override
-    public List<Account> listAccounts() {
-        return accountRepository.findAll();
+    public List<Account> listAccounts(LedgerId ledgerId) {
+        List<Account> result = new ArrayList<>();
+        for(Account account : accountRepository.findAll()) {
+            if (account.ledgerId().equals(ledgerId)) {
+                result.add(account);
+            }
+        }
+        return result;
     }
 
     @Override
-    public List<JournalTransaction> listTransactions() {
-        return journalTransactionRepository.findAll();
+    public List<JournalTransaction> listTransactions(LedgerId ledgerId) {
+        return List.of();
     }
 
     @Override
-    public AccountingPeriod createPeriod(String name, LocalDate startDate, LocalDate endDate) {
-        AccountingPeriod period = AccountingPeriod.open(name, startDate, endDate);
+    public List<AccountingPeriod> listPeriods(LedgerId ledgerId) {
+        List<AccountingPeriod> result = new ArrayList<>();
+        for (AccountingPeriod period : accountingPeriodRepository.findAll()) {
+            if (period.ledgerId().equals(ledgerId)) {
+                result.add(period);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public AccountingPeriod createPeriod(LedgerId ledgerId, String name, LocalDate startDate, LocalDate endDate) {
+        AccountingPeriod period = AccountingPeriod.open(ledgerId, name, startDate, endDate);
         return accountingPeriodRepository.save(period);
     }
 
     @Override
-    public List<AccountingPeriod> listPeriods() {
-        return accountingPeriodRepository.findAll();
-    }
-
-    @Override
-    public List<AccountBalanceView> getTrialBalance(AccountingPeriod period) {
+    public List<AccountBalanceView> getTrialBalance(LedgerId ledgerId, AccountingPeriod period) {
         List<AccountBalanceView> result = new ArrayList<>();
-
         for (Account account : accountRepository.findAll()) {
+            if (!account.ledgerId().equals(ledgerId)) {
+                continue;
+            }
             var balance = getBalanceForPeriod(account.id(), period);
             result.add(new AccountBalanceView(
                     account.code(),
@@ -229,8 +249,14 @@ public final class AccountingServiceImpl implements AccountingService {
                     balance
             ));
         }
-
         result.sort(Comparator.comparing(AccountBalanceView::accountCode));
         return result;
     }
+
+    private String buildTransferReference(JournalType journalType, Account debitAccount, Account creditAccount, LocalDate transactionDate) {
+        String datePart = transactionDate.toString().replace("-", "");
+        long timePart = Instant.now().toEpochMilli();
+        return journalType.name() + "-TRF-" + datePart + "-" + debitAccount.code() + "-" + creditAccount.code() + "-" + timePart;
+    }
+
 }

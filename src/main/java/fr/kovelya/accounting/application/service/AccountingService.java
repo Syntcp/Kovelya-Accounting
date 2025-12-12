@@ -5,6 +5,7 @@ import fr.kovelya.accounting.application.dto.AccountPosting;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountId;
 import fr.kovelya.accounting.domain.account.AccountType;
+import fr.kovelya.accounting.domain.ledger.LedgerId;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
@@ -15,23 +16,23 @@ import java.util.List;
 
 public interface AccountingService {
 
-    Account openAccount(String code, String name, String currencyCode, AccountType type);
+    Account openAccount(LedgerId ledgerId, String code, String name, String currencyCode, AccountType type);
 
     void postTransfer(AccountId debitAccountId, AccountId creditAccountId, Money amount, JournalType journalType, String description, LocalDate transactionDate);
 
-    void postJournalTransaction(JournalType journalType, String description, LocalDate transactionDate, AccountPosting... postings);
+    void postJournalTransaction(JournalType journalType, String reference, String description, LocalDate transactionDate, AccountPosting... postings);
 
     Money getBalance(AccountId accountId);
 
     Money getBalanceForPeriod(AccountId accountId, AccountingPeriod period);
 
-    List<Account> listAccounts();
+    List<Account> listAccounts(LedgerId ledgerId);
 
-    List<JournalTransaction> listTransactions();
+    List<JournalTransaction> listTransactions(LedgerId ledgerId);
 
-    AccountingPeriod createPeriod(String name, LocalDate startDate, LocalDate endDate);
+    AccountingPeriod createPeriod(LedgerId ledgerId, String name, LocalDate startDate, LocalDate endDate);
 
-    List<AccountingPeriod> listPeriods();
+    List<AccountingPeriod> listPeriods(LedgerId ledgerId);
 
-    List<AccountBalanceView> getTrialBalance(AccountingPeriod period);
+    List<AccountBalanceView> getTrialBalance(LedgerId ledgerId, AccountingPeriod period);
 }
