@@ -118,12 +118,7 @@ public final class AccountingServiceImpl implements AccountingService {
             entries.add(entry);
         }
 
-        AccountingPeriod period = accountingPeriodRepository.findByDate(transactionDate)
-                .orElseThrow(() -> new IllegalStateException("No accounting period covering date " + transactionDate));
-
-        if (period.status() != PeriodStatus.OPEN) {
-            throw new IllegalStateException("Accounting period " + period.name() + " is not open");
-        }
+       AccountingPeriod period = requireOpenPeriod(transactionDate);
 
         JournalTransaction transaction = JournalTransaction.create(
                 journalType,
@@ -274,6 +269,16 @@ public final class AccountingServiceImpl implements AccountingService {
         String datePart = transactionDate.toString().replace("-", "");
         long timePart = Instant.now().toEpochMilli();
         return journalType.name() + "-TRF-" + datePart + "-" + debitAccount.code() + "-" + creditAccount.code() + "-" + timePart;
+    }
+
+    private AccountingPeriod requireOpenPeriod(LocalDate transactionDate) {
+        AccountingPeriod period = accountingPeriodRepository.findByDate(transactionDate)
+                .orElseThrow(() -> new IllegalStateException("No accounting period covering date " + transactionDate));
+
+        if (period.status() != PeriodStatus.OPEN) {
+            throw new IllegalStateException("Accounting period " + period.name() + " is not open");
+        }
+        return period;
     }
 
 }
