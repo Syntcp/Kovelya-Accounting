@@ -57,6 +57,10 @@ public final class AccountingServiceImpl implements AccountingService {
         Account creditAccount = accountRepository.findById(creditAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Credit account not found"));
 
+        if (!debitAccount.ledgerId().equals(creditAccount.ledgerId())) {
+            throw new IllegalArgumentException("Accounts must belong to the same ledger");
+        }
+
         if (!debitAccount.currency().equals(creditAccount.currency())) {
             throw new IllegalArgumentException("Currency mismatch between accounts");
         }
@@ -72,7 +76,6 @@ public final class AccountingServiceImpl implements AccountingService {
 
         postJournalTransaction(journalType, reference, description, transactionDate, debit, credit);
     }
-
 
     @Override
     public void postJournalTransaction(JournalType journalType, String reference, String description, LocalDate transactionDate, AccountPosting... postings) {
@@ -91,10 +94,17 @@ public final class AccountingServiceImpl implements AccountingService {
         Instant now = Instant.now();
         List<LedgerEntry> entries = new ArrayList<>();
         Currency currency = null;
+        LedgerId ledgerId = null;
 
         for (AccountPosting posting : postings) {
             Account account = accountRepository.findById(posting.accountId())
                     .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+            if (ledgerId == null) {
+                ledgerId = account.ledgerId();
+            } else if (!account.ledgerId().equals(ledgerId)) {
+                throw new IllegalArgumentException("All accounts in a transaction must belong to the same ledger");
+            }
 
             if (currency == null) {
                 currency = account.currency();
@@ -114,11 +124,14 @@ public final class AccountingServiceImpl implements AccountingService {
                     now
             );
 
-            ledgerEntryRepository.save(entry);
             entries.add(entry);
         }
 
-       AccountingPeriod period = requireOpenPeriod(transactionDate);
+        if (ledgerId == null) {
+            throw new IllegalArgumentException("Ledger is required");
+        }
+
+        AccountingPeriod period = requireOpenPeriod(ledgerId, transactionDate);
 
         JournalTransaction transaction = JournalTransaction.create(
                 journalType,
@@ -129,7 +142,12 @@ public final class AccountingServiceImpl implements AccountingService {
                 period.id(),
                 entries
         );
+
         journalTransactionRepository.save(transaction);
+
+        for (LedgerEntry entry : entries) {
+            ledgerEntryRepository.save(entry);
+        }
     }
 
     @Override
@@ -271,14 +289,28 @@ public final class AccountingServiceImpl implements AccountingService {
         return journalType.name() + "-TRF-" + datePart + "-" + debitAccount.code() + "-" + creditAccount.code() + "-" + timePart;
     }
 
-    private AccountingPeriod requireOpenPeriod(LocalDate transactionDate) {
-        AccountingPeriod period = accountingPeriodRepository.findByDate(transactionDate)
-                .orElseThrow(() -> new IllegalStateException("No accounting period covering date " + transactionDate));
+    private AccountingPeriod requireOpenPeriod(LedgerId ledgerId, LocalDate transactionDate) {
+        AccountingPeriod period = null;
+        for (AccountingPeriod p : accountingPeriodRepository.findAll()) {
+            if (!p.ledgerId().equals(ledgerId)) {
+                continue;
+            }
+            if (!transactionDate.isBefore(p.startDate()) && !transactionDate.isAfter(p.endDate())) {
+                period = p;
+                break;
+            }
+        }
+
+        if (period == null) {
+            throw new IllegalStateException("No accounting period covering date " + transactionDate + " for ledger " + ledgerId);
+        }
 
         if (period.status() != PeriodStatus.OPEN) {
             throw new IllegalStateException("Accounting period " + period.name() + " is not open");
         }
+
         return period;
     }
+
 
 }
