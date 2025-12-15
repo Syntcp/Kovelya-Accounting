@@ -91,7 +91,8 @@ public final class AccountingServiceImpl implements AccountingService {
             throw new IllegalArgumentException("Reference is required");
         }
 
-        Instant now = Instant.now();
+        ZoneId zone = ZoneId.systemDefault();
+        Instant bookingInstant = transactionDate.atStartOfDay(zone).toInstant();
         List<LedgerEntry> entries = new ArrayList<>();
         Currency currency = null;
         LedgerId ledgerId = null;
@@ -121,7 +122,7 @@ public final class AccountingServiceImpl implements AccountingService {
                     posting.amount(),
                     posting.direction(),
                     description,
-                    now
+                    bookingInstant
             );
 
             entries.add(entry);
@@ -137,7 +138,7 @@ public final class AccountingServiceImpl implements AccountingService {
                 journalType,
                 reference,
                 description,
-                now,
+                bookingInstant,
                 transactionDate,
                 period.id(),
                 entries
