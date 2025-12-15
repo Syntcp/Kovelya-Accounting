@@ -180,4 +180,95 @@ public class AccountingEngineTest {
         assertEquals(0, operating.netIncome().amount().compareTo(new BigDecimal("100")));
     }
 
+    @Test
+    void reversingTransactionRestoresBalances() {
+        var ctx = TestBootstrap.bootstrap();
+        var eur = Currency.getInstance("EUR");
+
+        var debit = new AccountPosting(
+                ctx.bank().id(),
+                Money.of(new BigDecimal("10.00"), eur),
+                LedgerEntry.Direction.DEBIT
+        );
+
+        var credit = new AccountPosting(
+                ctx.capital().id(),
+                Money.of(new BigDecimal("10.00"), eur),
+                LedgerEntry.Direction.CREDIT
+        );
+
+        ctx.accountingService().postJournalTransaction(
+                JournalType.GENERAL,
+                "TRF-REV-0001",
+                "Funding",
+                LocalDate.of(2025, 1, 1),
+                debit,
+                credit
+        );
+
+        var original = ctx.transactionRepository()
+                .findByJournalAndReference(JournalType.GENERAL, "TRF-REV-0001")
+                .orElseThrow();
+
+        ctx.accountingService().reverseTransaction(
+                original.id(),
+                "REV-TRF-REV-0001",
+                "Reversal",
+                LocalDate.of(2025, 1, 2)
+        );
+
+        var bankBal = ctx.accountingService().getBalance(ctx.bank().id());
+        var capBal = ctx.accountingService().getBalance(ctx.capital().id());
+
+        assertEquals(0, bankBal.amount().compareTo(BigDecimal.ZERO));
+        assertEquals(0, capBal.amount().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void reversingTransactionIsIdempotentByReference() {
+        var ctx = TestBootstrap.bootstrap();
+        var eur = Currency.getInstance("EUR");
+
+        var debit = new AccountPosting(
+                ctx.bank().id(),
+                Money.of(new BigDecimal("10.00"), eur),
+                LedgerEntry.Direction.DEBIT
+        );
+
+        var credit = new AccountPosting(
+                ctx.capital().id(),
+                Money.of(new BigDecimal("10.00"), eur),
+                LedgerEntry.Direction.CREDIT
+        );
+
+        ctx.accountingService().postJournalTransaction(
+                JournalType.GENERAL,
+                "TRF-REV-0002",
+                "Funding",
+                LocalDate.of(2025, 1, 1),
+                debit,
+                credit
+        );
+
+        var original = ctx.transactionRepository()
+                .findByJournalAndReference(JournalType.GENERAL, "TRF-REV-0002")
+                .orElseThrow();
+
+        ctx.accountingService().reverseTransaction(
+                original.id(),
+                "REV-IDEMP-0001",
+                "Reversal",
+                LocalDate.of(2025, 1, 2)
+        );
+
+        ctx.accountingService().reverseTransaction(
+                original.id(),
+                "REV-IDEMP-0001",
+                "Reversal",
+                LocalDate.of(2025, 1, 2)
+        );
+
+        assertEquals(1, ctx.transactionRepository().findByJournal(JournalType.ADJUSTMENT).size());
+        assertEquals(2, ctx.ledgerEntryRepository().findByAccount(ctx.bank().id()).size());
+    }
 }

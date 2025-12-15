@@ -6,11 +6,8 @@ import fr.kovelya.accounting.application.service.AccountingService;
 import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountId;
 import fr.kovelya.accounting.domain.account.AccountType;
-import fr.kovelya.accounting.domain.ledger.LedgerId;
+import fr.kovelya.accounting.domain.ledger.*;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
-import fr.kovelya.accounting.domain.ledger.JournalTransaction;
-import fr.kovelya.accounting.domain.ledger.JournalType;
-import fr.kovelya.accounting.domain.ledger.LedgerEntry;
 import fr.kovelya.accounting.domain.period.AccountingPeriodId;
 import fr.kovelya.accounting.domain.period.PeriodStatus;
 import fr.kovelya.accounting.domain.shared.Money;
@@ -149,6 +146,53 @@ public final class AccountingServiceImpl implements AccountingService {
         for (LedgerEntry entry : entries) {
             ledgerEntryRepository.save(entry);
         }
+    }
+
+    @Override
+    public void reverseTransaction(TransactionId originalTransactionId, String reversalReference, String description, LocalDate reversalDate) {
+        if (originalTransactionId == null) {
+            throw new IllegalArgumentException("Original transaction id is required");
+        }
+        if (reversalReference == null || reversalReference.isBlank()) {
+            throw new IllegalArgumentException("Reversal reference is required");
+        }
+        if (reversalDate == null) {
+            throw new IllegalArgumentException("Reversal date is required");
+        }
+
+        if (journalTransactionRepository.findByJournalAndReference(JournalType.ADJUSTMENT, reversalReference).isPresent()) {
+            return;
+        }
+
+        JournalTransaction original = journalTransactionRepository.findById(originalTransactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Original transaction not found"));
+
+        List<LedgerEntry> originalEntries = original.entries();
+        if (originalEntries.size() < 2) {
+            throw new IllegalStateException("Original transaction must have at least two entries");
+        }
+
+        List<AccountPosting> reversed = new ArrayList<>();
+        for (LedgerEntry entry : originalEntries) {
+            LedgerEntry.Direction dir = entry.direction() == LedgerEntry.Direction.DEBIT
+                    ? LedgerEntry.Direction.CREDIT
+                    : LedgerEntry.Direction.DEBIT;
+            reversed.add(new AccountPosting(entry.accountId(), entry.amount(), dir));
+        }
+
+        AccountPosting[] reversedPostings = reversed.toArray(AccountPosting[]::new);
+
+        String finalDescription = (description == null || description.isBlank())
+                ? "Reversal of " + original.reference()
+                : description;
+
+        postJournalTransaction(
+                JournalType.ADJUSTMENT,
+                reversalReference,
+                finalDescription,
+                reversalDate,
+                reversedPostings
+        );
     }
 
     @Override

@@ -6,6 +6,7 @@ import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountId;
 import fr.kovelya.accounting.domain.account.AccountType;
 import fr.kovelya.accounting.domain.ledger.LedgerId;
+import fr.kovelya.accounting.domain.ledger.TransactionId;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
@@ -22,6 +23,8 @@ public interface AccountingService {
 
     void postJournalTransaction(JournalType journalType, String reference, String description, LocalDate transactionDate, AccountPosting... postings);
 
+    void reverseTransaction(TransactionId originalTransactionId, String reversalReference, String description, LocalDate reversalDate);
+
     Money getBalance(AccountId accountId);
 
     Money getBalanceForPeriod(AccountId accountId, AccountingPeriod period);
@@ -35,4 +38,5 @@ public interface AccountingService {
     List<AccountingPeriod> listPeriods(LedgerId ledgerId);
 
     List<AccountBalanceView> getTrialBalance(LedgerId ledgerId, AccountingPeriod period);
+
 }
