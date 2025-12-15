@@ -115,7 +115,7 @@ public class ConsoleApp {
                 idempotencyExecutor
         );
 
-        FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService);
+        FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService, transactionRepository);
 
         ReceivablesAgingService receivablesAgingService = new ReceivablesAgingServiceImpl(
                 customerRepository,
