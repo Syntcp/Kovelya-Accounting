@@ -11,6 +11,7 @@ import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceId;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceLine;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoiceStatus;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
+import fr.kovelya.accounting.domain.repository.JournalTransactionRepository;
 import fr.kovelya.accounting.domain.repository.PurchaseInvoiceRepository;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.tax.TaxCategory;
@@ -24,15 +25,17 @@ public final class PurchaseInvoicePostingServiceImpl implements PurchaseInvoiceP
     private final PurchaseInvoiceRepository purchaseInvoiceRepository;
     private final AccountRepository accountRepository;
     private final AccountingService accountingService;
+    private final JournalTransactionRepository journalTransactionRepository;
     private final String payableAccountCode;
     private final String expenseAccountCode;
     private final String vatDeductibleAccountCode;
     private final VatRate vatRate;
 
-    public PurchaseInvoicePostingServiceImpl(PurchaseInvoiceRepository purchaseInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, String payableAccountCode, String expenseAccountCode, String vatDeductibleAccountCode, VatRate vatRate) {
+    public PurchaseInvoicePostingServiceImpl(PurchaseInvoiceRepository purchaseInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, JournalTransactionRepository journalTransactionRepository, String payableAccountCode, String expenseAccountCode, String vatDeductibleAccountCode, VatRate vatRate) {
         this.purchaseInvoiceRepository = purchaseInvoiceRepository;
         this.accountRepository = accountRepository;
         this.accountingService = accountingService;
+        this.journalTransactionRepository = journalTransactionRepository;
         this.payableAccountCode = payableAccountCode;
         this.expenseAccountCode = expenseAccountCode;
         this.vatDeductibleAccountCode = vatDeductibleAccountCode;
@@ -99,6 +102,10 @@ public final class PurchaseInvoicePostingServiceImpl implements PurchaseInvoiceP
 
         String reference = toPost.number();
         String description = "Purchase invoice " + toPost.number();
+
+        if (journalTransactionRepository.findByJournalAndReference(JournalType.PURCHASES, toPost.number()).isPresent()) {
+            return;
+        }
 
         accountingService.postJournalTransaction(
                 JournalType.PURCHASES,

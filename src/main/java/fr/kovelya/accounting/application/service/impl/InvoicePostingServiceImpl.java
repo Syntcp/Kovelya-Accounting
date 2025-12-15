@@ -11,6 +11,7 @@ import fr.kovelya.accounting.domain.invoice.SalesInvoiceId;
 import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.ledger.LedgerEntry;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
+import fr.kovelya.accounting.domain.repository.JournalTransactionRepository;
 import fr.kovelya.accounting.domain.repository.SalesInvoiceRepository;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.tax.TaxCategory;
@@ -24,15 +25,17 @@ public final class InvoicePostingServiceImpl implements InvoicePostingService {
     private final SalesInvoiceRepository salesInvoiceRepository;
     private final AccountRepository accountRepository;
     private final AccountingService accountingService;
+    private final JournalTransactionRepository journalTransactionRepository;
     private final String receivableAccountCode;
     private final String revenueAccountCode;
     private final String vatAccountCode;
     private final VatRate vatRate;
 
-    public InvoicePostingServiceImpl(SalesInvoiceRepository salesInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, String receivableAccountCode, String revenueAccountCode, String vatAccountCode, VatRate vatRate) {
+    public InvoicePostingServiceImpl(SalesInvoiceRepository salesInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, JournalTransactionRepository journalTransactionRepository, String receivableAccountCode, String revenueAccountCode, String vatAccountCode, VatRate vatRate) {
         this.salesInvoiceRepository = salesInvoiceRepository;
         this.accountRepository = accountRepository;
         this.accountingService = accountingService;
+        this.journalTransactionRepository = journalTransactionRepository;
         this.receivableAccountCode = receivableAccountCode;
         this.revenueAccountCode = revenueAccountCode;
         this.vatAccountCode = vatAccountCode;
@@ -97,6 +100,10 @@ public final class InvoicePostingServiceImpl implements InvoicePostingService {
         AccountPosting debitReceivable = new AccountPosting(receivable.id(), gross, LedgerEntry.Direction.DEBIT);
         AccountPosting creditRevenue = new AccountPosting(revenue.id(), net, LedgerEntry.Direction.CREDIT);
         AccountPosting creditVat = new AccountPosting(vatAccount.id(), vat, LedgerEntry.Direction.CREDIT);
+
+        if (journalTransactionRepository.findByJournalAndReference(JournalType.SALES, toPost.number()).isPresent()) {
+            return;
+        }
 
         accountingService.postJournalTransaction(
                 JournalType.SALES,
