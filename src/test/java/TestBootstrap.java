@@ -96,6 +96,17 @@ public class TestBootstrap {
                 idempotencyExecutor
         );
 
+        SalesCreditNoteService salesCreditNoteService = new SalesCreditNoteServiceImpl(
+                salesInvoiceRepository,
+                accountRepository,
+                accountingService,
+                transactionRepository,
+                "4110",
+                "7060",
+                "4457",
+                vatRate20
+        );
+
         FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService, transactionRepository);
 
         LedgerId ledgerId = new LedgerId(UUID.randomUUID());
@@ -138,6 +149,7 @@ public class TestBootstrap {
                 purchaseInvoicePaymentService,
                 periodClosingService,
                 financialStatementsService,
+                salesCreditNoteService,
                 ledgerId,
                 period,
                 bank,
@@ -166,6 +178,7 @@ public class TestBootstrap {
             PurchaseInvoicePaymentService purchaseInvoicePaymentService,
             PeriodClosingService periodClosingService,
             FinancialStatementsService financialStatementsService,
+            SalesCreditNoteService salesCreditNoteService,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
