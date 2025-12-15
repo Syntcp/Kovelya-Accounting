@@ -1,5 +1,6 @@
 package fr.kovelya.accounting.bootstrap;
 
+import fr.kovelya.accounting.application.dto.AccountPosting;
 import fr.kovelya.accounting.application.dto.InvoiceLineRequest;
 import fr.kovelya.accounting.application.dto.PurchaseInvoiceLineRequest;
 import fr.kovelya.accounting.application.report.AccountBalanceView;
@@ -15,12 +16,12 @@ import fr.kovelya.accounting.domain.customer.Customer;
 import fr.kovelya.accounting.domain.invoice.SalesInvoice;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
+import fr.kovelya.accounting.domain.ledger.LedgerEntry;
 import fr.kovelya.accounting.domain.ledger.LedgerId;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.purchase.PurchaseInvoice;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.supplier.Supplier;
-import fr.kovelya.accounting.domain.supplier.SupplierId;
 import fr.kovelya.accounting.domain.tax.TaxCategory;
 import fr.kovelya.accounting.domain.tax.VatRate;
 import fr.kovelya.accounting.infrastructure.persistence.memory.*;
@@ -44,6 +45,9 @@ public class ConsoleApp {
         InMemoryCustomerPaymentRepository customerPaymentRepository = new InMemoryCustomerPaymentRepository();
         InMemorySupplierPaymentRepository supplierPaymentRepository = new InMemorySupplierPaymentRepository();
 
+        InMemoryIdempotencyRepository idempotencyRepository = new InMemoryIdempotencyRepository();
+        IdempotencyExecutor idempotencyExecutor = new IdempotencyExecutor(idempotencyRepository);
+
         AccountingService accountingService = new AccountingServiceImpl(
                 accountRepository,
                 ledgerEntryRepository,
@@ -55,6 +59,18 @@ public class ConsoleApp {
                 customerRepository,
                 salesInvoiceRepository,
                 Currency.getInstance("EUR")
+        );
+
+        PurchasingService purchasingService = new PurchasingServiceImpl(
+                supplierRepository,
+                purchaseInvoiceRepository,
+                Currency.getInstance("EUR")
+        );
+
+        PeriodClosingService periodClosingService = new PeriodClosingServiceImpl(
+                accountingService,
+                periodRepository,
+                accountRepository
         );
 
         VatRate vatRate20 = VatRate.ofFraction(new BigDecimal("0.20"));
@@ -74,19 +90,8 @@ public class ConsoleApp {
                 accountRepository,
                 accountingService,
                 customerPaymentRepository,
-                "4110"
-        );
-
-        ReceivablesAgingService receivablesAgingService = new ReceivablesAgingServiceImpl(
-                customerRepository,
-                salesInvoiceRepository,
-                customerPaymentRepository
-        );
-
-        PurchasingService purchasingService = new PurchasingServiceImpl(
-                supplierRepository,
-                purchaseInvoiceRepository,
-                Currency.getInstance("EUR")
+                "4110",
+                idempotencyExecutor
         );
 
         PurchaseInvoicePostingService purchaseInvoicePostingService = new PurchaseInvoicePostingServiceImpl(
@@ -104,11 +109,16 @@ public class ConsoleApp {
                 accountRepository,
                 accountingService,
                 supplierPaymentRepository,
-                "4010"
+                "4010",
+                idempotencyExecutor
         );
 
-        FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(
-                accountingService
+        FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService);
+
+        ReceivablesAgingService receivablesAgingService = new ReceivablesAgingServiceImpl(
+                customerRepository,
+                salesInvoiceRepository,
+                customerPaymentRepository
         );
 
         PayablesAgingService payablesAgingService = new PayablesAgingServiceImpl(
@@ -126,26 +136,31 @@ public class ConsoleApp {
                 LocalDate.of(2025, 12, 31)
         );
 
-        Account cash = accountingService.openAccount(ledgerId, "5300", "Cash", "EUR", AccountType.ASSET);
         Account bank = accountingService.openAccount(ledgerId, "5121", "Bank", "EUR", AccountType.ASSET);
-        Account receivable = accountingService.openAccount(ledgerId, "4110", "Accounts Receivable", "EUR", AccountType.ASSET);
-        Account revenue = accountingService.openAccount(ledgerId, "7060", "Sales Revenue", "EUR", AccountType.INCOME);
-        Account vatCollected = accountingService.openAccount(ledgerId, "4457", "VAT Collected", "EUR", AccountType.LIABILITY);
-        Account payable = accountingService.openAccount(ledgerId, "4010", "Suppliers Payable", "EUR", AccountType.LIABILITY);
-        Account expense = accountingService.openAccount(ledgerId, "6060", "Subcontracting", "EUR", AccountType.EXPENSE);
-        Account vatDeductible = accountingService.openAccount(ledgerId, "4456", "VAT Deductible", "EUR", AccountType.ASSET);
+        Account cash = accountingService.openAccount(ledgerId, "5300", "Cash", "EUR", AccountType.ASSET);
 
-        Money initialAmount = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
-        accountingService.postTransfer(
-                bank.id(),
-                cash.id(),
-                initialAmount,
+        Account capital = accountingService.openAccount(ledgerId, "1010", "Capital", "EUR", AccountType.EQUITY);
+        Account retainedEarnings = accountingService.openAccount(ledgerId, "1100", "Retained earnings", "EUR", AccountType.EQUITY);
+
+        accountingService.openAccount(ledgerId, "4110", "Accounts Receivable", "EUR", AccountType.ASSET);
+        accountingService.openAccount(ledgerId, "7060", "Sales Revenue", "EUR", AccountType.INCOME);
+        accountingService.openAccount(ledgerId, "4457", "VAT Collected", "EUR", AccountType.LIABILITY);
+
+        accountingService.openAccount(ledgerId, "4010", "Suppliers Payable", "EUR", AccountType.LIABILITY);
+        accountingService.openAccount(ledgerId, "6060", "Subcontracting", "EUR", AccountType.EXPENSE);
+        accountingService.openAccount(ledgerId, "4456", "VAT Deductible", "EUR", AccountType.ASSET);
+
+        Money initialFunding = Money.of(new BigDecimal("100.00"), Currency.getInstance("EUR"));
+        accountingService.postJournalTransaction(
                 JournalType.GENERAL,
-                "Initial transfer",
-                LocalDate.of(2025, 1, 1)
+                "OPEN-FY-2025-0001",
+                "Opening funding",
+                LocalDate.of(2025, 1, 1),
+                new AccountPosting(bank.id(), initialFunding, LedgerEntry.Direction.DEBIT),
+                new AccountPosting(capital.id(), initialFunding, LedgerEntry.Direction.CREDIT)
         );
 
-        Customer customer = invoicingService.createCustomer(ledgerId,"CUST-001", "Acme Corp");
+        Customer customer = invoicingService.createCustomer(ledgerId, "CUST-001", "Acme Corp");
 
         SalesInvoice invoice1 = invoicingService.createDraftInvoice(
                 ledgerId,
@@ -168,14 +183,18 @@ public class ConsoleApp {
         invoicePostingService.postInvoice(invoice1.id());
         invoicePostingService.postInvoice(invoice2.id());
 
+        UUID cmd = UUID.randomUUID();
+
         invoicePaymentService.recordPayment(
-                invoice1.id(),
+                cmd,
+                invoice2.id(),
                 "5121",
-                Money.of(new BigDecimal("1000.00"), Currency.getInstance("EUR")),
-                LocalDate.of(2025, 2, 10)
+                Money.of(new BigDecimal("300.00"), Currency.getInstance("EUR")),
+                LocalDate.of(2025, 3, 1)
         );
 
         invoicePaymentService.recordPayment(
+                cmd,
                 invoice2.id(),
                 "5121",
                 Money.of(new BigDecimal("300.00"), Currency.getInstance("EUR")),
@@ -199,6 +218,8 @@ public class ConsoleApp {
                 "5121",
                 LocalDate.of(2025, 3, 5)
         );
+
+        periodClosingService.closePeriod(fy2025, retainedEarnings.id());
 
         System.out.println("Kovelya Extreme Accounting is alive");
 
@@ -246,27 +267,8 @@ public class ConsoleApp {
         System.out.println("Total equity (accounts): " + balanceSheet.totalEquity());
         System.out.println("Derived equity (A - L): " + balanceSheet.derivedEquity());
 
-        System.out.println("Customers:");
-        for (Customer c : invoicingService.listCustomers(ledgerId)) {
-            System.out.println(c.code() + " - " + c.name());
-        }
-
-        System.out.println("Sales invoices:");
-        for (SalesInvoice inv : invoicingService.listInvoices(ledgerId)) {
-            System.out.println(inv.number() + " - " + inv.status() + " - total: " + inv.total());
-        }
-
-        System.out.println("Suppliers:");
-        for (Supplier s : purchasingService.listSuppliers(ledgerId)) {
-            System.out.println(s.code() + " - " + s.name());
-        }
-
-        System.out.println("Purchase invoices:");
-        for (PurchaseInvoice pinv : purchasingService.listPurchaseInvoices(ledgerId)) {
-            System.out.println(pinv.number() + " - " + pinv.status() + " - total: " + pinv.total());
-        }
-
         LocalDate asOfDate = LocalDate.of(2025, 3, 15);
+
         System.out.println("Receivables aging as of " + asOfDate + ":");
         for (CustomerReceivableAgingView view : receivablesAgingService.getCustomerAging(asOfDate)) {
             System.out.println(

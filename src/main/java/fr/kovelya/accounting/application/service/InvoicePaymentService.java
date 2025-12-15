@@ -4,12 +4,13 @@ import fr.kovelya.accounting.domain.invoice.SalesInvoiceId;
 import fr.kovelya.accounting.domain.shared.Money;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public interface InvoicePaymentService {
 
-    void recordPayment(SalesInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate);
+    void recordPayment(UUID commandId, SalesInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate);
 
     default void recordPayment(SalesInvoiceId invoiceId, String bankAccountCode, LocalDate paymentDate) {
-        recordPayment(invoiceId, bankAccountCode, null, paymentDate);
+        recordPayment(UUID.randomUUID(), invoiceId, bankAccountCode, null, paymentDate);
     }
 }

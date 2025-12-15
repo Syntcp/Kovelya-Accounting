@@ -16,6 +16,7 @@ import fr.kovelya.accounting.domain.shared.Money;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public final class PurchaseInvoicePaymentServiceImpl implements PurchaseInvoicePaymentService {
 
@@ -24,17 +25,27 @@ public final class PurchaseInvoicePaymentServiceImpl implements PurchaseInvoiceP
     private final AccountingService accountingService;
     private final SupplierPaymentRepository supplierPaymentRepository;
     private final String payableAccountCode;
+    private final IdempotencyExecutor idempotencyExecutor;
 
-    public PurchaseInvoicePaymentServiceImpl(PurchaseInvoiceRepository purchaseInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, SupplierPaymentRepository supplierPaymentRepository, String payableAccountCode) {
+    public PurchaseInvoicePaymentServiceImpl(PurchaseInvoiceRepository purchaseInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, SupplierPaymentRepository supplierPaymentRepository, String payableAccountCode, IdempotencyExecutor idempotencyExecutor) {
         this.purchaseInvoiceRepository = purchaseInvoiceRepository;
         this.accountRepository = accountRepository;
         this.accountingService = accountingService;
         this.supplierPaymentRepository = supplierPaymentRepository;
         this.payableAccountCode = payableAccountCode;
+        this.idempotencyExecutor = idempotencyExecutor;
     }
 
     @Override
-    public void recordPayment(PurchaseInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate) {
+    public void recordPayment(UUID commandId, PurchaseInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate) {
+        idempotencyExecutor.runVoid(
+                commandId,
+                () -> doRecordPayment(invoiceId, bankAccountCode, amount, paymentDate),
+                () -> {}
+        );
+    }
+
+    private void doRecordPayment(PurchaseInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate) {
         PurchaseInvoice invoice = purchaseInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("Purchase invoice not found"));
 
@@ -86,7 +97,7 @@ public final class PurchaseInvoicePaymentServiceImpl implements PurchaseInvoiceP
                 paymentDate
         );
 
-        SupplierPayment payment = SupplierPayment.create(invoice.id(), toPay, LocalDate.now(), bankAccountCode);
+        SupplierPayment payment = SupplierPayment.create(invoice.id(), toPay, paymentDate, bankAccountCode);
         supplierPaymentRepository.save(payment);
 
         PurchaseInvoice updated;

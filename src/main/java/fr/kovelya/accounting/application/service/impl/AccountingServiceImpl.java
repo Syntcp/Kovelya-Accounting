@@ -11,6 +11,7 @@ import fr.kovelya.accounting.domain.period.AccountingPeriod;
 import fr.kovelya.accounting.domain.ledger.JournalTransaction;
 import fr.kovelya.accounting.domain.ledger.JournalType;
 import fr.kovelya.accounting.domain.ledger.LedgerEntry;
+import fr.kovelya.accounting.domain.period.AccountingPeriodId;
 import fr.kovelya.accounting.domain.period.PeriodStatus;
 import fr.kovelya.accounting.domain.shared.Money;
 import fr.kovelya.accounting.domain.repository.AccountRepository;
@@ -22,10 +23,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Currency;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public final class AccountingServiceImpl implements AccountingService {
 
@@ -214,7 +212,26 @@ public final class AccountingServiceImpl implements AccountingService {
 
     @Override
     public List<JournalTransaction> listTransactions(LedgerId ledgerId) {
-        return List.of();
+        Set<AccountingPeriodId> periodIds = new HashSet<>();
+        for (AccountingPeriod period : accountingPeriodRepository.findAll()) {
+            if (period.ledgerId().equals(ledgerId)) {
+                periodIds.add(period.id());
+            }
+        }
+
+        List<JournalTransaction> result = new ArrayList<>();
+        for (JournalTransaction tx : journalTransactionRepository.findAll()) {
+            if (periodIds.contains(tx.getPeriodId())) {
+                result.add(tx);
+            }
+        }
+
+        result.sort(
+                Comparator.comparing(JournalTransaction::getTransactionDate)
+                    .thenComparing(JournalTransaction::timestamp)
+        );
+
+        return result;
     }
 
     @Override

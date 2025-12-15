@@ -23,7 +23,6 @@ public final class Account {
             throw new IllegalArgumentException("Account code is required");
         }
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Account name is required");
         }
         if (type == null) {
             throw new IllegalArgumentException("Account type is required");

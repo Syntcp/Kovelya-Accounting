@@ -1,6 +1,5 @@
 package fr.kovelya.accounting.application.service.impl;
 
-import fr.kovelya.accounting.application.dto.AccountPosting;
 import fr.kovelya.accounting.application.service.AccountingService;
 import fr.kovelya.accounting.application.service.InvoicePaymentService;
 import fr.kovelya.accounting.domain.account.Account;
@@ -17,6 +16,7 @@ import fr.kovelya.accounting.domain.shared.Money;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
 
@@ -25,17 +25,27 @@ public final class InvoicePaymentServiceImpl implements InvoicePaymentService {
     private final AccountingService accountingService;
     private final CustomerPaymentRepository customerPaymentRepository;
     private final String receivableAccountCode;
+    private final IdempotencyExecutor idempotencyExecutor;
 
-    public InvoicePaymentServiceImpl(SalesInvoiceRepository salesInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, CustomerPaymentRepository customerPaymentRepository, String receivableAccountCode) {
+    public InvoicePaymentServiceImpl(SalesInvoiceRepository salesInvoiceRepository, AccountRepository accountRepository, AccountingService accountingService, CustomerPaymentRepository customerPaymentRepository, String receivableAccountCode, IdempotencyExecutor idempotencyExecutor) {
         this.salesInvoiceRepository = salesInvoiceRepository;
         this.accountRepository = accountRepository;
         this.accountingService = accountingService;
         this.customerPaymentRepository = customerPaymentRepository;
         this.receivableAccountCode = receivableAccountCode;
+        this.idempotencyExecutor = idempotencyExecutor;
     }
 
     @Override
-    public void recordPayment(SalesInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate) {
+    public void recordPayment(UUID commandId, SalesInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate) {
+        idempotencyExecutor.runVoid(
+                commandId,
+                () -> doRecordPayment(invoiceId, bankAccountCode, amount, paymentDate),
+                () -> {}
+        );
+    }
+
+    private void doRecordPayment(SalesInvoiceId invoiceId, String bankAccountCode, Money amount, LocalDate paymentDate) {
         SalesInvoice invoice = salesInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
 
