@@ -8,5 +8,7 @@ public interface FinancialStatementsService {
 
     IncomeStatementView getIncomeStatement(AccountingPeriod period);
 
+    IncomeStatementView getOperatingIncomeStatement(AccountingPeriod period);
+
     BalanceSheetView getBalanceSheet(AccountingPeriod period);
 }
