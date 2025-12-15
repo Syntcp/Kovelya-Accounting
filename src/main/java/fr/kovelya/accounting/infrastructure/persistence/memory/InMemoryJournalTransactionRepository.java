@@ -32,6 +32,16 @@ public final class InMemoryJournalTransactionRepository implements JournalTransa
     }
 
     @Override
+    public Optional<JournalTransaction> findByJournalAndReference(JournalType journalType, String reference) {
+        for (JournalTransaction transaction : storage) {
+            if (transaction.journalType() == journalType && transaction.reference().equals(reference)) {
+                return Optional.of(transaction);
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public List<JournalTransaction> findAll() {
         return new ArrayList<>(storage);
     }

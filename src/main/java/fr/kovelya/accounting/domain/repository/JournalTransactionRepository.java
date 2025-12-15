@@ -14,6 +14,8 @@ public interface JournalTransactionRepository {
 
     Optional<JournalTransaction> findById(TransactionId id);
 
+    Optional<JournalTransaction> findByJournalAndReference(JournalType journalType, String reference);
+
     List<JournalTransaction> findAll();
 
     List<JournalTransaction> findByPeriod(Instant from, Instant to);
