@@ -44,6 +44,7 @@ public class ConsoleApp {
         InMemoryPurchaseInvoiceRepository purchaseInvoiceRepository = new InMemoryPurchaseInvoiceRepository();
         InMemoryCustomerPaymentRepository customerPaymentRepository = new InMemoryCustomerPaymentRepository();
         InMemorySupplierPaymentRepository supplierPaymentRepository = new InMemorySupplierPaymentRepository();
+        InMemoryCustomerCreditRepository customerCreditRepository = new InMemoryCustomerCreditRepository();
 
         InMemoryIdempotencyRepository idempotencyRepository = new InMemoryIdempotencyRepository();
         IdempotencyExecutor idempotencyExecutor = new IdempotencyExecutor(idempotencyRepository);
@@ -91,7 +92,9 @@ public class ConsoleApp {
                 accountRepository,
                 accountingService,
                 customerPaymentRepository,
+                customerCreditRepository,
                 "4110",
+                "4191",
                 idempotencyExecutor
         );
 

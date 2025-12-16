@@ -26,6 +26,7 @@ public class TestBootstrap {
         var supplierRepository = new InMemorySupplierRepository();
         var purchaseInvoiceRepository = new InMemoryPurchaseInvoiceRepository();
         var supplierPaymentRepository = new InMemorySupplierPaymentRepository();
+        var customerCreditRepository = new InMemoryCustomerCreditRepository();
 
         var idempotencyExecutor = new IdempotencyExecutor(idempotencyRepository);
 
@@ -92,7 +93,9 @@ public class TestBootstrap {
                 accountRepository,
                 accountingService,
                 customerPaymentRepository,
+                customerCreditRepository,
                 "4110",
+                "4191",
                 idempotencyExecutor
         );
 
@@ -151,6 +154,7 @@ public class TestBootstrap {
                 periodClosingService,
                 financialStatementsService,
                 salesCreditNoteService,
+                customerCreditRepository,
                 ledgerId,
                 period,
                 bank,
@@ -180,6 +184,7 @@ public class TestBootstrap {
             PeriodClosingService periodClosingService,
             FinancialStatementsService financialStatementsService,
             SalesCreditNoteService salesCreditNoteService,
+            InMemoryCustomerCreditRepository customerCreditRepository,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
