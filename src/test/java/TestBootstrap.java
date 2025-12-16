@@ -110,6 +110,17 @@ public class TestBootstrap {
                 vatRate20
         );
 
+        CustomerCreditApplicationService customerCreditApplicationService = new CustomerCreditApplicationServiceImpl(
+                salesInvoiceRepository,
+                customerPaymentRepository,
+                customerCreditRepository,
+                accountRepository,
+                accountingService,
+                "4110",
+                "4191",
+                idempotencyExecutor
+        );
+
         FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService, transactionRepository);
 
         LedgerId ledgerId = new LedgerId(UUID.randomUUID());
@@ -155,6 +166,7 @@ public class TestBootstrap {
                 financialStatementsService,
                 salesCreditNoteService,
                 customerCreditRepository,
+                customerCreditApplicationService,
                 ledgerId,
                 period,
                 bank,
@@ -185,6 +197,7 @@ public class TestBootstrap {
             FinancialStatementsService financialStatementsService,
             SalesCreditNoteService salesCreditNoteService,
             InMemoryCustomerCreditRepository customerCreditRepository,
+            CustomerCreditApplicationService customerCreditApplicationService,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
