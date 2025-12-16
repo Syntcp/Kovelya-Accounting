@@ -7,5 +7,5 @@ import java.util.UUID;
 
 public interface CustomerBatchPaymentService {
 
-    void recordBacthPayment(UUID commandId, String bankAccountCode, LocalDate paymentDate, SalesInvoicePaymentAllocation... allocations);
+    void recordBatchPayment(UUID commandId, String bankAccountCode, LocalDate paymentDate, SalesInvoicePaymentAllocation... allocations);
 }
