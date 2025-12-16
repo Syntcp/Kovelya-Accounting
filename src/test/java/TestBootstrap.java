@@ -127,7 +127,8 @@ public class TestBootstrap {
         accountingService.openAccount(ledgerId, "4010", "Suppliers Payable", "EUR", AccountType.LIABILITY);
         accountingService.openAccount(ledgerId, "6060", "Subcontracting", "EUR", AccountType.EXPENSE);
         accountingService.openAccount(ledgerId, "4456", "VAT Deductible", "EUR", AccountType.ASSET);
-
+        accountingService.openAccount(ledgerId, "4191", "Customer Advances", "EUR", AccountType.LIABILITY);
+        accountingService.openAccount(ledgerId, "4091", "Supplier Advances", "EUR", AccountType.ASSET);
 
         return new Context(
                 accountRepository,
