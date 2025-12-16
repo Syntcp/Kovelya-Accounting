@@ -45,8 +45,8 @@ public class ConsoleApp {
         InMemoryCustomerPaymentRepository customerPaymentRepository = new InMemoryCustomerPaymentRepository();
         InMemorySupplierPaymentRepository supplierPaymentRepository = new InMemorySupplierPaymentRepository();
         InMemoryCustomerCreditRepository customerCreditRepository = new InMemoryCustomerCreditRepository();
-
         InMemoryIdempotencyRepository idempotencyRepository = new InMemoryIdempotencyRepository();
+        InMemorySupplierAdvanceRepository supplierAdvanceRepository = new InMemorySupplierAdvanceRepository();
         IdempotencyExecutor idempotencyExecutor = new IdempotencyExecutor(idempotencyRepository);
 
         AccountingService accountingService = new AccountingServiceImpl(
@@ -114,7 +114,9 @@ public class ConsoleApp {
                 accountRepository,
                 accountingService,
                 supplierPaymentRepository,
+                supplierAdvanceRepository,
                 "4010",
+                "4090",
                 idempotencyExecutor
         );
 
