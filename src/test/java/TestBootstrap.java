@@ -4,6 +4,7 @@ import fr.kovelya.accounting.domain.account.Account;
 import fr.kovelya.accounting.domain.account.AccountType;
 import fr.kovelya.accounting.domain.ledger.LedgerId;
 import fr.kovelya.accounting.domain.period.AccountingPeriod;
+import fr.kovelya.accounting.domain.repository.SupplierAdvanceRepository;
 import fr.kovelya.accounting.domain.tax.VatRate;
 import fr.kovelya.accounting.infrastructure.persistence.memory.*;
 
@@ -182,6 +183,7 @@ public class TestBootstrap {
                 customerCreditRepository,
                 customerCreditApplicationService,
                 supplierAdvanceApplicationService,
+                supplierAdvanceRepository,
                 ledgerId,
                 period,
                 bank,
@@ -214,6 +216,7 @@ public class TestBootstrap {
             InMemoryCustomerCreditRepository customerCreditRepository,
             CustomerCreditApplicationService customerCreditApplicationService,
             SupplierAdvanceApplicationService supplierAdvanceApplicationService,
+            SupplierAdvanceRepository supplierAdvanceRepository,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
