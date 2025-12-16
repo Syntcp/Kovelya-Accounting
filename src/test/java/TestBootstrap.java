@@ -153,6 +153,16 @@ public class TestBootstrap {
                 idempotencyExecutor
         );
 
+        CustomerAdvanceReceiptService customerAdvanceReceiptService =
+                new CustomerAdvanceReceiptServiceImpl(
+                        accountRepository,
+                        accountingService,
+                        customerCreditRepository,
+                        "4191",
+                        idempotencyExecutor
+                );
+
+
         FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService, transactionRepository);
 
         LedgerId ledgerId = new LedgerId(UUID.randomUUID());
@@ -203,6 +213,7 @@ public class TestBootstrap {
                 supplierAdvanceRepository,
                 customerBatchPaymentService,
                 supplierBatchPaymentService,
+                customerAdvanceReceiptService,
                 ledgerId,
                 period,
                 bank,
@@ -238,6 +249,7 @@ public class TestBootstrap {
             SupplierAdvanceRepository supplierAdvanceRepository,
             CustomerBatchPaymentService customerBatchPaymentService,
             SupplierBatchPaymentService supplierBatchPaymentService,
+            CustomerAdvanceReceiptService customerAdvanceReceiptService,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
