@@ -27,8 +27,8 @@ public class TestBootstrap {
         var purchaseInvoiceRepository = new InMemoryPurchaseInvoiceRepository();
         var supplierPaymentRepository = new InMemorySupplierPaymentRepository();
         var customerCreditRepository = new InMemoryCustomerCreditRepository();
-
         var idempotencyExecutor = new IdempotencyExecutor(idempotencyRepository);
+        var supplierAdvanceRepository = new InMemorySupplierAdvanceRepository();
 
         AccountingService accountingService = new AccountingServiceImpl(
                 accountRepository,
@@ -73,7 +73,9 @@ public class TestBootstrap {
                 accountRepository,
                 accountingService,
                 supplierPaymentRepository,
+                supplierAdvanceRepository,
                 "4010",
+                "4090",
                 idempotencyExecutor
         );
 
@@ -121,6 +123,18 @@ public class TestBootstrap {
                 idempotencyExecutor
         );
 
+        SupplierAdvanceApplicationService supplierAdvanceApplicationService = new SupplierAdvanceApplicationServiceImpl(
+                purchaseInvoiceRepository,
+                supplierPaymentRepository,
+                supplierAdvanceRepository,
+                accountRepository,
+                accountingService,
+                "4010",
+                "4091",
+                idempotencyExecutor
+        );
+
+
         FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService, transactionRepository);
 
         LedgerId ledgerId = new LedgerId(UUID.randomUUID());
@@ -167,6 +181,7 @@ public class TestBootstrap {
                 salesCreditNoteService,
                 customerCreditRepository,
                 customerCreditApplicationService,
+                supplierAdvanceApplicationService,
                 ledgerId,
                 period,
                 bank,
@@ -198,6 +213,7 @@ public class TestBootstrap {
             SalesCreditNoteService salesCreditNoteService,
             InMemoryCustomerCreditRepository customerCreditRepository,
             CustomerCreditApplicationService customerCreditApplicationService,
+            SupplierAdvanceApplicationService supplierAdvanceApplicationService,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
