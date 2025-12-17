@@ -162,6 +162,15 @@ public class TestBootstrap {
                         idempotencyExecutor
                 );
 
+        SupplierAdvanceReceiptService supplierAdvanceReceiptService =
+                new SupplierAdvanceReceiptServiceImpl(
+                        accountRepository,
+                        accountingService,
+                        supplierAdvanceRepository,
+                        "4091",
+                        idempotencyExecutor
+                );
+
 
         FinancialStatementsService financialStatementsService = new FinancialStatementsServiceImpl(accountingService, transactionRepository);
 
@@ -214,6 +223,7 @@ public class TestBootstrap {
                 customerBatchPaymentService,
                 supplierBatchPaymentService,
                 customerAdvanceReceiptService,
+                supplierAdvanceReceiptService,
                 ledgerId,
                 period,
                 bank,
@@ -250,6 +260,7 @@ public class TestBootstrap {
             CustomerBatchPaymentService customerBatchPaymentService,
             SupplierBatchPaymentService supplierBatchPaymentService,
             CustomerAdvanceReceiptService customerAdvanceReceiptService,
+            SupplierAdvanceReceiptService supplierAdvanceReceiptService,
             LedgerId ledgerId,
             AccountingPeriod period,
             Account bank,
